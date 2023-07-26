@@ -16,8 +16,8 @@ def initialize(UB_hat, UB, U, B, X, U_hat, B_hat, **context):
     U[0] = -1 + np.tanh((z-pi/2)/params.kh_width) - np.tanh((z-3*pi/2)/params.kh_width)
     UB_hat = UB.forward(UB_hat)
     if params.init_mode == "noise":
-        U += curl(np.random.normal(scale=params.deltaU, size=U.shape))
-        B += curl(np.random.normal(scale=params.deltaB, size=B.shape))
+        U_hat += curl(np.random.normal(scale=params.deltaU, size=U.shape))
+        B_hat += curl(np.random.normal(scale=params.deltaB, size=B.shape))
 
 
 def update(context):
@@ -50,7 +50,7 @@ def update_outfile(f, sim_time, dnames, data):
 
 
 if __name__ == '__main__':
-    M = 8
+    M = 7
     Re = 100.0
     # Make sure we can resolve the Kolmogorov scale
     assert Re <= ((2/3)*2**M)**(4/3) 
@@ -61,17 +61,17 @@ if __name__ == '__main__':
         {'nu': nu,             # Viscosity
          'eta': eta,
          'dt': 0.01,                 # Time step
-         'T': 40.0,                   # End time
+         'T': 10.0,                   # End time
          'M': [M, M, M],
          'L': [2*np.pi, 2*np.pi, 2*np.pi],
-         'write_result': 100,
+         'write_result': 1e10,
          'solver': "MHD",
          'amplitude_name': f"out_M{M}_Re{Re}.h5",
          'optimization': 'cython',
          'kh_width': 1e-2,
          'deltaU': 1e-5,
          'deltaB': 1e-5,
-         'init_mode': 'noise',
+         'init_mode': 'NOT_noise',
          'convection': 'Divergence'})
 
     solver = get_solver(update=update)
