@@ -14,10 +14,6 @@ def initialize(UB_hat, UB, U, B, X, U_hat, B_hat, **context):
     dx = params.L/params.N
     curl = Curl(h=dx)
     U[0] = -1 + np.tanh((z-pi/2)/params.kh_width) - np.tanh((z-3*pi/2)/params.kh_width)
-    if init_mode == "noise":
-        U += np.random.normal(scale=params.deltaU, size=U.shape)
-        B += np.random.normal(scale=params.deltaB, size=B.shape)
-
     UB_hat = UB.forward(UB_hat)
     if params.init_mode == "noise":
         U += curl(np.random.normal(scale=params.deltaU, size=U.shape))
