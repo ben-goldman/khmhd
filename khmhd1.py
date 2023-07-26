@@ -5,18 +5,23 @@ from mpi4py import MPI
 import h5py
 from math import ceil, sqrt
 from scipy import signal
+from findiff import Curl
 pi = np.pi
 
-def initialize(UB_hat, UB, U, B, X, **context):
+def initialize(UB_hat, UB, U, B, X, U_hat, B_hat, **context):
     params = config.params
-    N = params.N
     x = X[0]; y = X[1]; z = X[2]
+    dx = params.L/params.N
+    curl = Curl(h=dx)
     U[0] = -1 + np.tanh((z-pi/2)/params.kh_width) - np.tanh((z-3*pi/2)/params.kh_width)
     if init_mode == "noise":
         U += np.random.normal(scale=params.deltaU, size=U.shape)
         B += np.random.normal(scale=params.deltaB, size=B.shape)
 
     UB_hat = UB.forward(UB_hat)
+    if params.init_mode == "noise":
+        U += curl(np.random.normal(scale=params.deltaU, size=U.shape))
+        B += curl(np.random.normal(scale=params.deltaB, size=B.shape))
 
 
 def update(context):
@@ -67,9 +72,9 @@ if __name__ == '__main__':
          'solver': "MHD",
          'amplitude_name': f"out_M{M}_Re{Re}.h5",
          'optimization': 'cython',
-         'kh_width': 0.01,
-         'deltaU': 0.01,
-         'deltaB': 0.01,
+         'kh_width': 1e-2,
+         'deltaU': 1e-5,
+         'deltaB': 1e-5,
          'init_mode': 'noise',
          'convection': 'Divergence'})
 
