@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 from mpi4py import MPI
 import h5py
 from math import ceil, sqrt
+from scipy import signal
 pi = np.pi
 
 def initialize(UB_hat, UB, U, B, X, **context):
@@ -11,7 +12,7 @@ def initialize(UB_hat, UB, U, B, X, **context):
     N = params.N
     x = X[0]; y = X[1]; z = X[2]
     U[0] = -1 + np.tanh((z-pi/2)/params.kh_width) - np.tanh((z-3*pi/2)/params.kh_width)
-    if params.init_mode == "noise":
+    if init_mode == "noise":
         U += np.random.normal(scale=params.deltaU, size=U.shape)
         B += np.random.normal(scale=params.deltaB, size=B.shape)
 
@@ -74,7 +75,7 @@ if __name__ == '__main__':
 
     solver = get_solver(update=update)
     context = solver.get_context()
-    context.hdf5file.filename = "img_M{M}_Re{Re}"
+    context.hdf5file.filename = f"img_M{M}_Re{Re}"
     initialize(**context)
     f = init_outfile(config.params.amplitude_name, ["u2", "b2"])
     with f:
