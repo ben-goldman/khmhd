@@ -79,5 +79,5 @@ if __name__ == '__main__':
     context.hdf5file.filename = "img_M{M}_Re{Re}"
     initialize(**context)
     f = init_outfile(config.params.amplitude_name, ["u2", "b2"])
-    # with f:
-        # solve(solver, context)
+    with f:
+        solve(solver, context)
