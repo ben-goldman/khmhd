@@ -68,9 +68,9 @@ if __name__ == '__main__':
          'solver': "MHD",
          'amplitude_name': f"out_M{M}_Re{Re}.h5",
          'optimization': 'cython',
-         'kh_width': 0.01,
-         'deltaU': 0.01,
-         'deltaB': 0.01,
+         'kh_width': 1e-2,
+         'deltaU': 1e-5,
+         'deltaB': 1e-5,
          'init_mode': 'noise',
          'convection': 'Divergence'})
 
