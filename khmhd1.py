@@ -91,11 +91,11 @@ def update(context):
     print(params.t, UEk, BEk)
 
 
-def init_outfile(path, dnames, shape):
+def init_outfile(path, dnames, length):
     f = h5py.File(path, mode="w", driver="mpio", comm=MPI.COMM_WORLD)
     f.create_dataset("sim_time", dtype=np.float64, shape=(0), maxshape=(10000))
     for dname in dnames:
-        f.create_dataset(dname, dtype=np.float64, shape=(0)+shape, maxshape=(10000)+shape)
+        f.create_dataset(dname, dtype=np.float64, shape=(0, length), maxshape=(10000, length))
     return f
 
 def update_outfile(f, sim_time, dnames, data):
@@ -120,7 +120,7 @@ if __name__ == '__main__':
         {'nu': nu,             # Viscosity
          'eta': eta,
          'dt': 0.01,                 # Time step
-         'T': 20.0,                   # End time
+         'T': 1.0,                   # End time
          'M': [M, M, M],
          'L': [2*np.pi, 2*np.pi, 2*np.pi],
          'write_result': 500,
@@ -137,6 +137,7 @@ if __name__ == '__main__':
     context = solver.get_context()
     context.hdf5file.filename = f"img_M{M}_Re{Re}"
     initialize(**context)
-    f = init_outfile(config.params.amplitude_name, ["UEk", "BEk"])
+    _, _, bins = spectrum(solver, context)
+    f = init_outfile(config.params.amplitude_name, ["UEk", "BEk"], bins.shape[0])
     with f:
         solve(solver, context)
