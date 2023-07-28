@@ -120,7 +120,7 @@ if __name__ == '__main__':
         {'nu': nu,             # Viscosity
          'eta': eta,
          'dt': 0.01,                 # Time step
-         'T': 1.0,                   # End time
+         'T': 10.0,                   # End time
          'M': [M, M, M],
          'L': [2*np.pi, 2*np.pi, 2*np.pi],
          'write_result': 500,
