@@ -8,13 +8,12 @@ from scipy import signal
 from findiff import Curl
 pi = np.pi
 
-def initialize(UB_hat, UB, U, B, X, U_hat, B_hat, **context):
+def initialize(UB_hat, UB, U, B, X, **context):
     params = config.params
     x = X[0]; y = X[1]; z = X[2]
     dx = params.L/params.N
     curl = Curl(h=dx)
     U[0] = -1 + np.tanh((z-pi/2)/params.kh_width) - np.tanh((z-3*pi/2)/params.kh_width)
-    print(U.shape)
     if params.init_mode == "noise":
         U += curl(np.random.normal(scale=params.deltaU, size=U.shape))
         B += curl(np.random.normal(scale=params.deltaB, size=B.shape))
