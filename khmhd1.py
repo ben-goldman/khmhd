@@ -53,8 +53,8 @@ def update_outfile(f, sim_time, dnames, data):
 
 
 if __name__ == '__main__':
-    M = 7
-    Re = 100.0
+    M = 8
+    Re = 900.0
     # Make sure we can resolve the Kolmogorov scale
     assert Re <= ((2/3)*2**M)**(4/3) 
     Pm = 1.0
@@ -64,15 +64,15 @@ if __name__ == '__main__':
         {'nu': nu,             # Viscosity
          'eta': eta,
          'dt': 0.01,                 # Time step
-         'T': 10.0,                   # End time
+         'T': 20.0,                   # End time
          'M': [M, M, M],
          'L': [2*np.pi, 2*np.pi, 2*np.pi],
-         'write_result': 1e10,
+         'write_result': 500,
          'solver': "MHD",
          'amplitude_name': f"out_M{M}_Re{Re}.h5",
          'optimization': 'cython',
          'kh_width': 1e-2,
-         'deltaU': 1e-5,
+         'deltaU': 1e-3,
          'deltaB': 1e-5,
          'init_mode': 'noise_v2',
          'convection': 'Divergence'})
@@ -82,5 +82,5 @@ if __name__ == '__main__':
     context.hdf5file.filename = f"img_M{M}_Re{Re}"
     initialize(**context)
     f = init_outfile(config.params.amplitude_name, ["u2", "b2"])
-    # with f:
-        # solve(solver, context)
+    with f:
+        solve(solver, context)
