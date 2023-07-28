@@ -14,10 +14,11 @@ def initialize(UB_hat, UB, U, B, X, U_hat, B_hat, **context):
     dx = params.L/params.N
     curl = Curl(h=dx)
     U[0] = -1 + np.tanh((z-pi/2)/params.kh_width) - np.tanh((z-3*pi/2)/params.kh_width)
-    UB_hat = UB.forward(UB_hat)
+    print(U.shape)
     if params.init_mode == "noise":
-        U_hat += curl(np.random.normal(scale=params.deltaU, size=U.shape))
-        B_hat += curl(np.random.normal(scale=params.deltaB, size=B.shape))
+        U += curl(np.random.normal(scale=params.deltaU, size=U.shape))
+        B += curl(np.random.normal(scale=params.deltaB, size=B.shape))
+    UB_hat = UB.forward(UB_hat)
 
 
 def update(context):
@@ -71,7 +72,7 @@ if __name__ == '__main__':
          'kh_width': 1e-2,
          'deltaU': 1e-5,
          'deltaB': 1e-5,
-         'init_mode': 'NOT_noise',
+         'init_mode': 'noise',
          'convection': 'Divergence'})
 
     solver = get_solver(update=update)
@@ -79,5 +80,5 @@ if __name__ == '__main__':
     context.hdf5file.filename = f"img_M{M}_Re{Re}"
     initialize(**context)
     f = init_outfile(config.params.amplitude_name, ["u2", "b2"])
-    with f:
-        solve(solver, context)
+    # with f:
+        # solve(solver, context)

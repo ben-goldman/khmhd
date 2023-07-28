@@ -6,7 +6,7 @@
 #SBATCH -c 32 # of cores
 #SBATCH -N 2  # of nodes
 #SBATCH --mem-per-cpu=5G      # The memory the job will use per cpu core
-#SBATCH --time=0-5:00         # The time the job will take to run in D-HH:MM
+#SBATCH --time=0-2:00         # The time the job will take to run in D-HH:MM
 #SBATCH --mail-type=ALL
 #SBATCH --mail-user=bog2101@columbia.edu
  
