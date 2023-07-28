@@ -17,7 +17,10 @@ def initialize(UB_hat, UB, U, B, X, **context):
     if params.init_mode == "noise":
         U += curl(np.random.normal(scale=params.deltaU, size=U.shape))
         B += curl(np.random.normal(scale=params.deltaB, size=B.shape))
-    UB_hat = UB.forward(UB_hat)
+        UB_hat = UB.forward(UB_hat)
+    elif params.init_mode == "noise_v2":
+        UB_hat = UB.forward(UB_hat)
+        UB_hat += np.random.normal(scale=params.deltaU, size=UB_hat.shape)
 
 
 def update(context):
@@ -71,7 +74,7 @@ if __name__ == '__main__':
          'kh_width': 1e-2,
          'deltaU': 1e-5,
          'deltaB': 1e-5,
-         'init_mode': 'noise',
+         'init_mode': 'noise_v2',
          'convection': 'Divergence'})
 
     solver = get_solver(update=update)
