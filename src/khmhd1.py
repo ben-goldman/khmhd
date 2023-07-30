@@ -3,24 +3,33 @@ from spectralDNS import config, get_solver, solve
 import matplotlib.pyplot as plt
 from mpi4py import MPI
 import h5py
-from math import ceil, sqrt
-from scipy import signal
+# from math import ceil, sqrt
+# from scipy import signal
 from findiff import Curl
 pi = np.pi
 
-def initialize(UB_hat, UB, U, B, X, **context):
+def initialize(UB_hat, UB, U, B, X, K, K_over_K2, **context):
     params = config.params
     x = X[0]; y = X[1]; z = X[2]
     dx = params.L/params.N
     curl = Curl(h=dx)
-    U[0] = -1 + np.tanh((z-pi/2)/params.kh_width) - np.tanh((z-3*pi/2)/params.kh_width)
+    UB[0] = -1 + np.tanh((z-pi/2)/params.kh_width) - np.tanh((z-3*pi/2)/params.kh_width)
     if params.init_mode == "noise":
-        U += curl(np.random.normal(scale=params.deltaU, size=U.shape))
-        B += curl(np.random.normal(scale=params.deltaB, size=B.shape))
+        theta = np.random.sample(UB_hat.shape)*2j*np.pi
+        phi = np.random.sample(UB_hat.shape)*2j*np.pi
         UB_hat = UB.forward(UB_hat)
-    elif params.init_mode == "noise_v2":
+        UB_hat += params.deltaU + 1j*params.deltaU + np.random.sample(UB_hat.shape)*params.deltaU #theta + 1j*phi
+        UB_hat[:] -= (K[0]*UB_hat[0]+K[1]*UB_hat[1]+K[2]*UB_hat[2]+K[0]*UB_hat[3]+K[1]*UB_hat[4]+K[2]*UB_hat[5])# * K_over_K2
+    else:
+        k = 2*np.pi*np.array([0, np.cos(params.theta_p), np.sin(params.theta_p)])
+        vx = params.deltaU*np.cos(np.tensordot(k, X, axes=1) + np.random.rand())
+        vy = params.deltaU*np.cos(np.tensordot(k, X, axes=1) + np.random.rand())
+        U[1] = vx
+        U[2] = vy
+        B[0, :, :, :] = params.deltaB
+        B[1, :, :, :] = 0
+        B[2, :, :, :] = params.deltaB
         UB_hat = UB.forward(UB_hat)
-        UB_hat += np.random.normal(scale=params.deltaU, size=UB_hat.shape)
 
 def spectrum(solver, context):
     c = context
@@ -88,7 +97,14 @@ def update(context):
     # b2 = solver.comm.allreduce(np.mean(B[0]**2 + B[1]**2 + B[2]**2))
     UEk, BEk, _ = spectrum(solver, context)
     update_outfile(f, params.t, ("UEk", "BEk"), (UEk, BEk))
-    print(params.t, UEk, BEk)
+    if params.tstep % params.plot_spectrum == 0:
+        plt.plot(np.log(bins), np.log(UEk))
+        plt.savefig(f"UEk{params.tstep}.jpg")
+        plt.close()
+        plt.plot(np.log(bins), np.log(BEk))
+        plt.savefig(f"BEk{params.tstep}.png")
+        plt.close()
+    print(params.t)
 
 
 def init_outfile(path, dnames, length):
@@ -109,8 +125,8 @@ def update_outfile(f, sim_time, dnames, data):
 
 
 if __name__ == '__main__':
-    M = 8
-    Re = 900.0
+    M = 7
+    Re = 200.0
     # Make sure we can resolve the Kolmogorov scale
     assert Re <= ((2/3)*2**M)**(4/3) 
     Pm = 1.0
@@ -130,14 +146,17 @@ if __name__ == '__main__':
          'kh_width': 1e-2,
          'deltaU': 1e-3,
          'deltaB': 1e-3,
-         'init_mode': 'noise_v2',
+         'init_mode': 'NOT_noise',
+         'theta_p': 0.005,
+         'plot_spectrum': 5,
          'convection': 'Divergence'})
 
     solver = get_solver(update=update)
     context = solver.get_context()
     context.hdf5file.filename = f"img_M{M}_Re{Re}"
     initialize(**context)
-    _, _, bins = spectrum(solver, context)
+    UEk, BEk, bins = spectrum(solver, context)
+    print(UEk, BEk)
     f = init_outfile(config.params.amplitude_name, ["UEk", "BEk"], bins.shape[0])
     with f:
         solve(solver, context)
