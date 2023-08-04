@@ -69,15 +69,16 @@ def update(context):
     UEk, bins = spectrum(solver, context.UB_hat[1:3])
     BEk, _ = spectrum(solver, context.UB_hat[4:6])
     update_outfile(f, params.t, ("UEk", "BEk"), (UEk, BEk))
-    if params.tstep % params.plot_spectrum == 0:
-        plt.plot(np.log10(bins), np.log10(UEk))
-        plt.suptitle(f"$U^2(k), t={params.t/(2*np.pi)}$")
-        plt.savefig(f"UEk{params.tstep:05}.jpg")
-        plt.close()
-        plt.plot(np.log10(bins), np.log10(BEk))
-        plt.suptitle(f"$B^2(k), t={params.t/(2*np.pi)}$")
-        plt.savefig(f"BEk{params.tstep:05}.jpg")
-        plt.close()
+    with np.errstate(divide='ignore'):
+        if params.tstep % params.plot_spectrum == 0:
+            plt.plot(np.log10(bins), np.log10(UEk))
+            plt.suptitle(f"$U^2(k), t={params.t/(2*np.pi)}$")
+            plt.savefig(f"UEk{params.tstep:05}.jpg")
+            plt.close()
+            plt.plot(np.log10(bins), np.log10(BEk))
+            plt.suptitle(f"$B^2(k), t={params.t/(2*np.pi)}$")
+            plt.savefig(f"BEk{params.tstep:05}.jpg")
+            plt.close()
     print(params.t)
 
 
@@ -131,10 +132,11 @@ if __name__ == '__main__':
     initialize(**context)
     UEk, bins = spectrum(solver, context.U_hat[1:3])
     print(UEk)
-    plt.plot(np.log10(bins), np.log10(UEk))
-    plt.suptitle(f"$U^2(k), t=0$ (initial conditions)")
-    plt.savefig(f"Ek_0.jpg")
-    plt.close()
+        with np.errstate(divide='ignore'):
+        plt.plot(np.log10(bins), np.log10(UEk))
+        plt.suptitle(f"$U^2(k), t=0$ (initial conditions)")
+        plt.savefig(f"Ek_0.jpg")
+        plt.close()
     f = init_outfile(config.params.amplitude_name, ["UEk", "BEk"], bins.shape[0])
-    with f:
-        solve(solver, context)
+    # with f:
+        # solve(solver, context)
