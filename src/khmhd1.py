@@ -99,10 +99,12 @@ def update(context):
     update_outfile(f, params.t, ("UEk", "BEk"), (UEk, BEk))
     if params.tstep % params.plot_spectrum == 0:
         plt.plot(np.log(bins), np.log(UEk))
-        plt.savefig(f"UEk{params.tstep}.jpg")
+        plt.savefig(f"UEk{params.tstep:05}.jpg")
+        plt.suptitle("UEk, t={params.t}")
         plt.close()
         plt.plot(np.log(bins), np.log(BEk))
-        plt.savefig(f"BEk{params.tstep}.png")
+        plt.savefig(f"BEk{params.tstep:05}.jpg")
+        plt.suptitle("BEk, t={params.t}")
         plt.close()
     print(params.t)
 
@@ -125,8 +127,8 @@ def update_outfile(f, sim_time, dnames, data):
 
 
 if __name__ == '__main__':
-    M = 7
-    Re = 200.0
+    M = 8
+    Re = 900.0
     # Make sure we can resolve the Kolmogorov scale
     assert Re <= ((2/3)*2**M)**(4/3) 
     Pm = 1.0
@@ -136,7 +138,7 @@ if __name__ == '__main__':
         {'nu': nu,             # Viscosity
          'eta': eta,
          'dt': 0.01,                 # Time step
-         'T': 10.0,                   # End time
+         'T': 40.0,                   # End time
          'M': [M, M, M],
          'L': [2*np.pi, 2*np.pi, 2*np.pi],
          'write_result': 500,
@@ -144,11 +146,11 @@ if __name__ == '__main__':
          'amplitude_name': f"out_M{M}_Re{Re}.h5",
          'optimization': 'cython',
          'kh_width': 1e-2,
-         'deltaU': 1e-3,
-         'deltaB': 1e-3,
+         'deltaU': 1e-4,
+         'deltaB': 1e-4,
          'init_mode': 'NOT_noise',
          'theta_p': 0.005,
-         'plot_spectrum': 5,
+         'plot_spectrum': 10,
          'convection': 'Divergence'})
 
     solver = get_solver(update=update)
