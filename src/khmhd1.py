@@ -132,11 +132,11 @@ if __name__ == '__main__':
     initialize(**context)
     UEk, bins = spectrum(solver, context.U_hat[1:3])
     print(UEk)
-        with np.errstate(divide='ignore'):
+    with np.errstate(divide='ignore'):
         plt.plot(np.log10(bins), np.log10(UEk))
         plt.suptitle(f"$U^2(k), t=0$ (initial conditions)")
         plt.savefig(f"Ek_0.jpg")
         plt.close()
     f = init_outfile(config.params.amplitude_name, ["UEk", "BEk"], bins.shape[0])
-    # with f:
-        # solve(solver, context)
+    with f:
+        solve(solver, context)
