@@ -17,5 +17,7 @@ conda activate spectralDNS
 date
 mpiexec -n 64 python khmhd1.py
 date
+ffmpeg -framerate 15 -pattern_type glob -i 'UEk*.jpg' -c:v libx264 -pix_fmt yuv420p UEk.mp4
+ffmpeg -framerate 15 -pattern_type glob -i 'BEk*.png' -c:v libx264 -pix_fmt yuv420p BEk.mp4
 
 # End of script

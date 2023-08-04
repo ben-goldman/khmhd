@@ -136,5 +136,5 @@ if __name__ == '__main__':
     plt.savefig(f"Ek_0.jpg")
     plt.close()
     f = init_outfile(config.params.amplitude_name, ["UEk", "BEk"], bins.shape[0])
-    #with f:
-        #solve(solver, context)
+    with f:
+        solve(solver, context)
