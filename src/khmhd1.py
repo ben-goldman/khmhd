@@ -127,8 +127,8 @@ def update_outfile(f, sim_time, dnames, data):
 if __name__ == '__main__':
     log.info("Starting simulation.")
     M = 8
-    Pm = 2.0
-    Re = 450.0
+    Pm = 1.0
+    Re = 1500.0
     Rm = Pm*Re
     nu = 1.0/Re
     eta = 1.0/Rm
@@ -181,6 +181,6 @@ if __name__ == '__main__':
     log.info("Initializing custom HDF5 file.")
     f = init_outfile(config.params.out_file, ["Uk", "Bk", "U_mean", "B_mean"], bins.shape[0])
     log.info("Ready to start simulation.")
-    with f:
-        log.info("About to start solver.")
-        solve(solver, context)
+    # with f:
+        # log.info("About to start solver.")
+        # solve(solver, context)
