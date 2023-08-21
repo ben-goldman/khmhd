@@ -1,39 +1,48 @@
 import numpy as np
 from spectralDNS import config, get_solver, solve
 import matplotlib.pyplot as plt
+from matplotlib import colors
 from mpi4py import MPI
 import h5py
-# from math import ceil, sqrt
-# from scipy import signal
-from findiff import Curl
+import logging
 pi = np.pi
+logging.basicConfig(level=logging.INFO, format="%(asctime)s~>%(message)s")
+log = logging.getLogger(__name__)
 
-def initialize(UB_hat, UB, U, B, X, K, K_over_K2, **context):
+def initialize(UB, UB_hat, X, K, K2, K_over_K2, **context):
     params = config.params
     x = X[0]; y = X[1]; z = X[2]
-    dx = params.L/params.N
-    curl = Curl(h=dx)
     UB[0] = -1 + np.tanh((z-pi/2)/params.kh_width) - np.tanh((z-3*pi/2)/params.kh_width)
-    if params.init_mode == "noise":
-        theta = np.random.sample(UB_hat.shape)*2j*np.pi
-        phi = np.random.sample(UB_hat.shape)*2j*np.pi
-        UB_hat = UB.forward(UB_hat)
-        UB_hat += params.deltaU + 1j*params.deltaU + np.random.sample(UB_hat.shape)*params.deltaU #theta + 1j*phi
-        UB_hat[:] -= (K[0]*UB_hat[0]+K[1]*UB_hat[1]+K[2]*UB_hat[2]+K[0]*UB_hat[3]+K[1]*UB_hat[4]+K[2]*UB_hat[5])# * K_over_K2
-    else:
-        k = 2*np.pi*np.array([0, np.cos(params.theta_p), np.sin(params.theta_p)])
-        vx = params.deltaU*np.cos(np.tensordot(k, X, axes=1) + np.random.rand())
-        vy = params.deltaU*np.cos(np.tensordot(k, X, axes=1) + np.random.rand())
-        UB[1] = vx
-        UB[2] = vy
-        UB[3] = params.deltaB
-        UB[4] = 0
-        UB[5] = params.deltaB
-        UB_hat = UB.forward(UB_hat)
+    UB[3:6] = params.deltaB
+
+    UB_hat = UB.forward(UB_hat)
+    np.random.seed(42)
+    k = np.sqrt(K2)
+    k = np.where(k == 0, 1, k)
+    kk = K2.copy()
+    kk = np.where(kk == 0, 1, kk)
+    k1, k2, k3 = K[0], K[1], K[2]
+    ksq = np.sqrt(k1**2+k2**2)
+    ksq = np.where(ksq == 0, 1, ksq)
+
+    theta1, theta2, phi = np.random.sample(UB_hat[0:3].shape)*2j*np.pi
+    alpha = np.sqrt(params.deltaU/4./np.pi/kk)*np.exp(1j*theta1)*np.cos(phi)
+    beta = np.sqrt(params.deltaU/4./np.pi/kk)*np.exp(1j*theta2)*np.sin(phi)
+    UB_hat[0] += (alpha*k*k2 + beta*k1*k3)/(k*ksq)
+    UB_hat[1] += (beta*k2*k3 - alpha*k*k1)/(k*ksq)
+    UB_hat[2] += beta*ksq/k
+    UB_hat[0:3] -= (k1*UB_hat[0] + k2*UB_hat[1] + k3*UB_hat[2])*K_over_K2
+
+    # theta1, theta2, phi = np.random.sample(UB_hat[3:6].shape)*2j*np.pi
+    # alpha = np.sqrt(params.deltaB/4./np.pi/kk)*np.exp(1j*theta1)*np.cos(phi)
+    # beta = np.sqrt(params.deltaB/4./np.pi/kk)*np.exp(1j*theta2)*np.sin(phi)
+    # UB_hat[3] += (alpha*k*k2 + beta*k1*k3)/(k*ksq)
+    # UB_hat[4] += (beta*k2*k3 - alpha*k*k1)/(k*ksq)
+    # UB_hat[5] += beta*ksq/k
+    # UB_hat[3:6] -= (k1*UB_hat[3] + k2*UB_hat[4] + k3*UB_hat[5])*K_over_K2
+
 
 def spectrum(solver, U_hat):
-    # SUBTRACTS KH BACKGROUND!
-    print(U_hat.shape)
     uiui = np.zeros(U_hat[0].shape)
     uiui[..., 1:-1] = 2*np.sum((U_hat[..., 1:-1]*np.conj(U_hat[..., 1:-1])).real, axis=0)
     uiui[..., 0] = np.sum((U_hat[..., 0]*np.conj(U_hat[..., 0])).real, axis=0)
@@ -62,27 +71,43 @@ def spectrum(solver, U_hat):
 
     return Ek, bins
 
+
 def update(context):
     params = config.params
     solver = config.solver
-    # dx, L, N = params.dx, params.L, params.N
-    UEk, bins = spectrum(solver, context.UB_hat[1:3])
-    BEk, _ = spectrum(solver, context.UB_hat[4:6])
-    update_outfile(f, params.t, ("UEk", "BEk"), (UEk, BEk))
-    with np.errstate(divide='ignore'):
-        if params.tstep % params.plot_spectrum == 0:
-            plt.plot(np.log10(bins), np.log10(UEk))
-            plt.suptitle(f"$U^2(k), t={params.t/(2*np.pi)}$")
-            plt.savefig(f"UEk{params.tstep:05}.jpg")
+    # U = context.UB_hat[0:3].copy()
+    # U_bar = np.mean(U[0], axis=0)
+    # B = context.UB_hat[3:6].copy()
+    # B_bar = np.mean(B[0], axis=0)
+    # for i in range(len(U[0, 0, 0])):
+        # U[0, i] =- U_bar
+        # B[0, i] =- B_bar
+    U_mean = solver.comm.allreduce(np.mean(np.abs(context.U_hat)))*3
+    B_mean = solver.comm.allreduce(np.mean(np.abs(context.B_hat)))*3
+    if solver.rank == 0:
+        log.info(f"tstep={params.tstep}, t_sim={params.t:2.3f}, U_mean={U_mean:2.3e}, log(B_mean)={np.log10(B_mean):3.6f}")
+    if params.tstep % params.plot_spectrum == 0:
+        Uk, bins = spectrum(solver, context.U_hat[1:3])
+        Bk, _ = spectrum(solver, context.B_hat[1:3])
+        update_outfile(f, params.t, ("Uk", "Bk", "U_mean", "B_mean"), (Uk, Bk, U_mean, B_mean))
+        with np.errstate(divide='ignore'):
+            fname = f"frames/Ek{params.tstep:05}.jpg"
+            # log.info(f"Plotting energy spectrum in {fname}")
+            fig, ax = plt.subplots()
+            ax.plot(bins, Uk, label="$U^2(k)$")
+            ax.plot(bins, Bk, label="$B^2(k)$")
+            ax.set_yscale("log")
+            ax.set_xscale("log", base=2)
+            ax.set_xlabel("$k$")
+            ax.set_ylabel("$E(k)$")
+            fig.legend()
+            fig.suptitle(f"Energy spectrum, t={params.t:2.3f}")
+            plt.savefig(fname)
             plt.close()
-            plt.plot(np.log10(bins), np.log10(BEk))
-            plt.suptitle(f"$B^2(k), t={params.t/(2*np.pi)}$")
-            plt.savefig(f"BEk{params.tstep:05}.jpg")
-            plt.close()
-    print(params.t)
 
 
 def init_outfile(path, dnames, length):
+    log.info(f"Creating output file at '{path}' with names {dnames} and length {length}")
     f = h5py.File(path, mode="w", driver="mpio", comm=MPI.COMM_WORLD)
     f.create_dataset("sim_time", dtype=np.float64, shape=(0), maxshape=(10000))
     for dname in dnames:
@@ -100,43 +125,62 @@ def update_outfile(f, sim_time, dnames, data):
 
 
 if __name__ == '__main__':
-    M = 8
-    Re = 900.0
-    # Make sure we can resolve the Kolmogorov scale
-    assert Re <= ((2/3)*2**M)**(4/3) 
-    Pm = 1.0
+    log.info("Starting simulation.")
+    M = 6
+    Pm = 2.0
+    Re = 73.0
+    Rm = Pm*Re
     nu = 1.0/Re
-    eta = Pm*nu
+    eta = 1.0/Rm
+    # Make sure we can resolve the Kolmogorov scale
+    Re_max = ((2/3)*2**M)**(4/3) 
+    log.info(f"M={M}, Re={Re}, Rm={Rm} Pm={Pm}, nu={nu}, eta={eta}, Re_max={Re_max}")
+    assert Re <= Re_max
+    assert Rm <= Re_max
     config.update(
         {'nu': nu,             # Viscosity
          'eta': eta,
-         'dt': 0.01,                 # Time step
-         'T': 40.0,                   # End time
+         'dt': 0.03,                 # Time step
+         'T': 50.0,                   # End time
          'M': [M, M, M],
          'L': [2*np.pi, 2*np.pi, 2*np.pi],
-         'write_result': 500,
+         'write_result': 20,
          'solver': "MHD",
-         'amplitude_name': f"out_M{M}_Re{Re}.h5",
+         'out_file': f"out_M{M}_Re{Re}.h5",
          'optimization': 'cython',
          'kh_width': 1e-2,
-         'deltaU': 1e-4,
-         'deltaB': 1e-4,
-         'init_mode': 'NOT_noise',
-         'theta_p': 0.005,
-         'plot_spectrum': 10,
+         'deltaU': 1e-6,
+         'deltaB': 1e-10,
+         'init_mode': 'noise',
+         'plot_spectrum': 20,
          'convection': 'Divergence'})
 
+    log.info("Building solver.")
     solver = get_solver(update=update)
+    log.info("Solver built.")
     context = solver.get_context()
     context.hdf5file.filename = f"img_M{M}_Re{Re}"
+    log.info("Initializing simulation.")
     initialize(**context)
-    UEk, bins = spectrum(solver, context.U_hat[1:3])
-    print(UEk)
+    log.info("Simulation initialized.")
+    log.info("Calculating initial energy spectrum.")
+    Uk, bins = spectrum(solver, context.UB_hat[1:3])
+    Bk, _ = spectrum(solver, context.UB_hat[4:6])
     with np.errstate(divide='ignore'):
-        plt.plot(np.log10(bins), np.log10(UEk))
-        plt.suptitle(f"$U^2(k), t=0$ (initial conditions)")
-        plt.savefig(f"Ek_0.jpg")
+        fig, ax = plt.subplots()
+        ax.plot(bins, Uk, label="$U^2(k)$")
+        ax.plot(bins, Bk, label="$B^2(k)$")
+        ax.set_yscale("log")
+        ax.set_xscale("log", base=2)
+        ax.set_xlabel("$k$")
+        ax.set_ylabel("$E(k)$")
+        fig.legend()
+        fig.suptitle(f"Energy spectrum, t=0")
+        plt.savefig(f"Ek0.jpg")
         plt.close()
-    f = init_outfile(config.params.amplitude_name, ["UEk", "BEk"], bins.shape[0])
+    log.info("Initializing custom HDF5 file.")
+    f = init_outfile(config.params.out_file, ["Uk", "Bk", "U_mean", "B_mean"], bins.shape[0])
+    log.info("Ready to start simulation.")
     with f:
+        log.info("About to start solver.")
         solve(solver, context)
