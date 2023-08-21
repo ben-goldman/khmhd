@@ -126,9 +126,9 @@ def update_outfile(f, sim_time, dnames, data):
 
 if __name__ == '__main__':
     log.info("Starting simulation.")
-    M = 6
+    M = 8
     Pm = 2.0
-    Re = 73.0
+    Re = 450.0
     Rm = Pm*Re
     nu = 1.0/Re
     eta = 1.0/Rm
@@ -140,7 +140,7 @@ if __name__ == '__main__':
     config.update(
         {'nu': nu,             # Viscosity
          'eta': eta,
-         'dt': 0.03,                 # Time step
+         'dt': 0.01,                 # Time step
          'T': 50.0,                   # End time
          'M': [M, M, M],
          'L': [2*np.pi, 2*np.pi, 2*np.pi],
@@ -149,8 +149,8 @@ if __name__ == '__main__':
          'out_file': f"out_M{M}_Re{Re}.h5",
          'optimization': 'cython',
          'kh_width': 1e-2,
-         'deltaU': 1e-6,
-         'deltaB': 1e-10,
+         'deltaU': 1e-8,
+         'deltaB': 1e-8,
          'init_mode': 'noise',
          'plot_spectrum': 20,
          'convection': 'Divergence'})
