@@ -140,11 +140,11 @@ if __name__ == '__main__':
     config.update(
         {'nu': nu,             # Viscosity
          'eta': eta,
-         'dt': 0.01,                 # Time step
+         'dt': 0.001,                 # Time step
          'T': 50.0,                   # End time
          'M': [M, M, M],
          'L': [2*np.pi, 2*np.pi, 2*np.pi],
-         'write_result': 20,
+         'write_result': 500,
          'solver': "MHD",
          'out_file': f"out_M{M}_Re{Re}.h5",
          'optimization': 'cython',
@@ -181,6 +181,6 @@ if __name__ == '__main__':
     log.info("Initializing custom HDF5 file.")
     f = init_outfile(config.params.out_file, ["Uk", "Bk", "U_mean", "B_mean"], bins.shape[0])
     log.info("Ready to start simulation.")
-    # with f:
-        # log.info("About to start solver.")
-        # solve(solver, context)
+    with f:
+        log.info("About to start solver.")
+        solve(solver, context)
