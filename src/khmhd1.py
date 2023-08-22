@@ -82,10 +82,16 @@ def update(context):
     # for i in range(len(U[0, 0, 0])):
         # U[0, i] =- U_bar
         # B[0, i] =- B_bar
+    global U_mean
+    global B_mean
+    U_mean_previous = U_mean
+    B_mean_previous = B_mean
     U_mean = solver.comm.allreduce(np.mean(np.abs(context.U_hat)))*3
     B_mean = solver.comm.allreduce(np.mean(np.abs(context.B_hat)))*3
+    g_u = (np.log(U_mean) - np.log(U_mean_previous))/params.dt
+    g_b = (np.log(B_mean) - np.log(B_mean_previous))/params.dt
     if solver.rank == 0:
-        log.info(f"tstep={params.tstep}, t_sim={params.t:2.3f}, U_mean={U_mean:2.3e}, log(B_mean)={np.log10(B_mean):3.6f}")
+        log.info(f"tstep={params.tstep}, t_sim={params.t:2.3f}, U_mean={U_mean:2.3e}, B_mean={B_mean:2.3e}, g_u={g_u:2.3f}, g_b={g_b:2.3f}")
     if params.tstep % params.plot_spectrum == 0:
         Uk, bins = spectrum(solver, context.U_hat[1:3])
         Bk, _ = spectrum(solver, context.B_hat[1:3])
@@ -101,7 +107,7 @@ def update(context):
             ax.set_xlabel("$k$")
             ax.set_ylabel("$E(k)$")
             fig.legend()
-            fig.suptitle(f"Energy spectrum, t={params.t:2.3f}")
+            fig.suptitle(f"$Energy spectrum, t={params.t:2.3f}, M={M}, Re={Re}, Rm={Rm}, dU = {params.deltaU}, dB={params.deltaB}$")
             plt.savefig(fname)
             plt.close()
 
@@ -126,9 +132,9 @@ def update_outfile(f, sim_time, dnames, data):
 
 if __name__ == '__main__':
     log.info("Starting simulation.")
-    M = 9
+    M = 7
     Pm = 1.0
-    Re = 2300.0
+    Re = 375.0
     Rm = Pm*Re
     nu = 1.0/Re
     eta = 1.0/Rm
@@ -140,7 +146,7 @@ if __name__ == '__main__':
     config.update(
         {'nu': nu,             # Viscosity
          'eta': eta,
-         'dt': 0.001,                 # Time step
+         'dt': 0.01,                 # Time step
          'T': 50.0,                   # End time
          'M': [M, M, M],
          'L': [2*np.pi, 2*np.pi, 2*np.pi],
@@ -183,4 +189,6 @@ if __name__ == '__main__':
     log.info("Ready to start simulation.")
     with f:
         log.info("About to start solver.")
+        U_mean = config.params.deltaU
+        B_mean = config.params.deltaB
         solve(solver, context)
