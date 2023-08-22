@@ -132,9 +132,9 @@ def update_outfile(f, sim_time, dnames, data):
 
 if __name__ == '__main__':
     log.info("Starting simulation.")
-    M = 7
+    M = 8
     Pm = 1.0
-    Re = 375.0
+    Re = 900.0
     Rm = Pm*Re
     nu = 1.0/Re
     eta = 1.0/Rm
