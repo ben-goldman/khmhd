@@ -86,8 +86,8 @@ def update(context):
     global B_mean
     U_mean_previous = U_mean
     B_mean_previous = B_mean
-    U_mean = solver.comm.allreduce(np.mean(np.abs(context.U_hat)))*3
-    B_mean = solver.comm.allreduce(np.mean(np.abs(context.B_hat)))*3
+    U_mean = solver.comm.allreduce(np.mean(np.sqrt(context.U[0]**2 + context.U[1]**2 + context.U[2]**2)))
+    B_mean = solver.comm.allreduce(np.mean(np.sqrt(context.B[0]**2 + context.B[1]**2 + context.B[2]**2)))
     g_u = (np.log(U_mean) - np.log(U_mean_previous))/params.dt
     g_b = (np.log(B_mean) - np.log(B_mean_previous))/params.dt
     if solver.rank == 0:
@@ -150,7 +150,7 @@ if __name__ == '__main__':
          'T': 50.0,                   # End time
          'M': [M, M, M],
          'L': [2*np.pi, 2*np.pi, 2*np.pi],
-         'write_result': 500,
+         'write_result': 100,
          'solver': "MHD",
          'out_file': f"out_M{M}_Re{Re}.h5",
          'optimization': 'cython',
