@@ -84,18 +84,20 @@ def update(context):
         # B[0, i] =- B_bar
     global U_mean
     global B_mean
-    U_mean_previous = U_mean
-    B_mean_previous = B_mean
-    U_mean = solver.comm.allreduce(np.mean(np.sqrt(context.U[0]**2 + context.U[1]**2 + context.U[2]**2)))
-    B_mean = solver.comm.allreduce(np.mean(np.sqrt(context.B[0]**2 + context.B[1]**2 + context.B[2]**2)))
-    g_u = (np.log(U_mean) - np.log(U_mean_previous))/params.dt
-    g_b = (np.log(B_mean) - np.log(B_mean_previous))/params.dt
     if solver.rank == 0:
-        log.info(f"tstep={params.tstep}, t_sim={params.t:2.3f}, U_mean={U_mean:2.5e}, B_mean={B_mean:2.5e}, g_u={g_u:2.5f}, g_b={g_b:2.5f}, U_max={np.max(context.U):2.5e}, B_max={np.max(context.B):2.5e}")
-    if params.tstep % params.plot_spectrum == 0:
+    if params.tstep % params.compute == 0:
+        U_mean_previous = U_mean
+        B_mean_previous = B_mean
+        UB = context.UB_hat.backward(context.UB)
+        U, B = UB[:3], UB[3:]
+        U_mean = solver.comm.allreduce(np.mean(np.sqrt(U[0]**2 + U[1]**2 + U[2]**2)))
+        B_mean = solver.comm.allreduce(np.mean(np.sqrt(B[0]**2 + B[1]**2 + B[2]**2)))
+        g_u = (np.log(U_mean) - np.log(U_mean_previous))/params.dt
+        g_b = (np.log(B_mean) - np.log(B_mean_previous))/params.dt
         Uk, bins = spectrum(solver, context.U_hat[1:3])
         Bk, _ = spectrum(solver, context.B_hat[1:3])
         update_outfile(f, params.t, ("Uk", "Bk", "U_mean", "B_mean"), (Uk, Bk, U_mean, B_mean))
+        log.info(f"tstep={params.tstep}, t_sim={params.t:2.3f}, U_mean={U_mean:2.5e}, B_mean={B_mean:2.5e}, g_u={g_u:2.5f}, g_b={g_b:2.5f}, U_max={np.max(context.U):2.5e}, B_max={np.max(context.B):2.5e}")
         with np.errstate(divide='ignore'):
             fname = f"frames/Ek{params.tstep:05}.jpg"
             # log.info(f"Plotting energy spectrum in {fname}")
@@ -158,7 +160,7 @@ if __name__ == '__main__':
          'deltaU': 1e-8,
          'deltaB': 1e-8,
          'init_mode': 'noise',
-         'plot_spectrum': 20,
+         'compute': 5,
          'convection': 'Divergence'})
 
     log.info("Building solver.")
