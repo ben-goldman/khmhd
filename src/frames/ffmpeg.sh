@@ -12,6 +12,6 @@ module load anaconda
 # conda init bash
 source /burg/home/bog2101/.bashrc
 conda activate spectralDNS
-ffmpeg -framerate 25 -pattern_type glob -i 'Ek*.jpg' -c:v libx264 -pix_fmt yuv420p Ek2.mp4
+ffmpeg -framerate 25 -pattern_type glob -i 'Ek*.jpg' -c:v libx264 -pix_fmt yuv420p Ek.mp4
 
 # End of script
