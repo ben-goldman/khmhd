@@ -86,12 +86,12 @@ def update(context):
     global B_mean
     U_mean_previous = U_mean
     B_mean_previous = B_mean
-    U_mean = solver.comm.allreduce(np.mean(np.sqrt(context.U[0]**2 + context.U[1]**2 + context.U[2]**2)))
-    B_mean = solver.comm.allreduce(np.mean(np.sqrt(context.B[0]**2 + context.B[1]**2 + context.B[2]**2)))
+    U_mean = solver.comm.allreduce(np.mean(np.sqrt(context.U[1]**2 + context.U[2]**2)))
+    B_mean = solver.comm.allreduce(np.mean(np.sqrt(context.B[1]**2 + context.B[2]**2)))
     g_u = (np.log(U_mean) - np.log(U_mean_previous))/params.dt
     g_b = (np.log(B_mean) - np.log(B_mean_previous))/params.dt
     if solver.rank == 0:
-        log.info(f"tstep={params.tstep}, t_sim={params.t:2.3f}, U_mean={U_mean:2.3e}, B_mean={B_mean:2.3e}, g_u={g_u:2.3f}, g_b={g_b:2.3f}")
+        log.info(f"tstep={params.tstep}, t_sim={params.t:2.3f}, U_mean={U_mean:2.10e}, B_mean={B_mean:2.10e}, g_u={g_u:2.10f}, g_b={g_b:2.10f}")
     if params.tstep % params.plot_spectrum == 0:
         Uk, bins = spectrum(solver, context.U_hat[1:3])
         Bk, _ = spectrum(solver, context.B_hat[1:3])
