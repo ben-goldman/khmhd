@@ -84,7 +84,6 @@ def update(context):
         # B[0, i] =- B_bar
     global U_mean
     global B_mean
-    if solver.rank == 0:
     if params.tstep % params.compute == 0:
         U_mean_previous = U_mean
         B_mean_previous = B_mean
@@ -97,7 +96,8 @@ def update(context):
         Uk, bins = spectrum(solver, context.U_hat[1:3])
         Bk, _ = spectrum(solver, context.B_hat[1:3])
         update_outfile(f, params.t, ("Uk", "Bk", "U_mean", "B_mean"), (Uk, Bk, U_mean, B_mean))
-        log.info(f"tstep={params.tstep}, t_sim={params.t:2.3f}, U_mean={U_mean:2.5e}, B_mean={B_mean:2.5e}, g_u={g_u:2.5f}, g_b={g_b:2.5f}, U_max={np.max(context.U):2.5e}, B_max={np.max(context.B):2.5e}")
+        if solver.rank == 0:
+            log.info(f"tstep={params.tstep}, t_sim={params.t:2.3f}, U_mean={U_mean:2.5e}, B_mean={B_mean:2.5e}, g_u={g_u:2.5f}, g_b={g_b:2.5f}, U_max={np.max(context.U):2.5e}, B_max={np.max(context.B):2.5e}")
         with np.errstate(divide='ignore'):
             fname = f"frames/Ek{params.tstep:05}.jpg"
             # log.info(f"Plotting energy spectrum in {fname}")
