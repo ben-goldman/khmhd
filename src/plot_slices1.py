@@ -59,7 +59,7 @@ plt.show()
 Nx, Ny, Nz = 256, 256, 256
 X, Y, Z = np.meshgrid(np.arange(Nx), np.arange(Ny), -np.arange(Nz))
 t=400
-fig = plt.figure(figsize=(12, 6))
+fig = plt.figure(figsize=(10, 5))
 
 data = f[f"UB0/3D/{t}"][:] #+ f[f"UB1/3D/{t}"][:] + f[f"UB2/3D/{t}"][:]
 kw = {'vmin': data.min(),
