@@ -1,5 +1,5 @@
 # Fdb version 4
-["pdflatex"] 1693273760 "poster.tex" "poster.pdf" "poster" 1693273761 2
+["pdflatex"] 1693275839 "poster.tex" "poster.pdf" "poster" 1693275841 0
   "/usr/share/texlive/texmf-dist/fonts/map/fontname/texfonts.map" 1577235249 3524 cb3e574dea2d1052e39280babc910dc8 ""
   "/usr/share/texlive/texmf-dist/fonts/tfm/public/amsfonts/symbols/msam10.tfm" 1246382020 916 f87d7c45f9c908e672703b83b72241a3 ""
   "/usr/share/texlive/texmf-dist/fonts/tfm/public/amsfonts/symbols/msbm10.tfm" 1246382020 908 2921f8a10601f252058503cc6570e581 ""
@@ -191,10 +191,16 @@
   "/usr/share/texlive/texmf-dist/web2c/texmf.cnf" 1684972800 40326 aba987258e6d6b6da5dec3a727ea174b ""
   "/var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map" 1687386134 475831 07b2a42c6bbb80497a4bd0b8c5faf8ec ""
   "/var/lib/texmf/web2c/pdftex/pdflatex.fmt" 1690682600 6471185 a87f6653969a6ded677516992764b809 ""
-  "poster.aux" 1693273761 1084 69a5f21fa1de0ebc4ab42bf593d06353 "pdflatex"
-  "poster.nav" 1693273761 307 9e520c26371a1250ff9fc1fe87f9c655 "pdflatex"
-  "poster.out" 1693273761 0 d41d8cd98f00b204e9800998ecf8427e "pdflatex"
-  "poster.tex" 1693273738 642 f6bfa29c9bb3013b2a955fccad6989fd ""
+  "figures/clouds.png" 1693275185 63214 38a6e6b843f8c961bf5108491526570f ""
+  "figures/cubes.pdf" 1693274187 6506933 02d9459a67151dbbf54d6a90d5741ee1 ""
+  "figures/images.pdf" 1693274187 503337 3f50ac116dd5d34b3cc0c0028218c0ca ""
+  "figures/lines.pdf" 1693275801 18135 f56147779c52e0db73ec0231bf9ba6b0 ""
+  "figures/merger.png" 1693275043 3552123 ce622a74149ebeba76352db7e18789fc ""
+  "figures/timeline.png" 1693275105 622613 de40b272203ad7ad18a913b368598552 ""
+  "poster.aux" 1693275841 1545 4220c5233a0133f652d91d5a69e04a6f "pdflatex"
+  "poster.nav" 1693275841 307 9e520c26371a1250ff9fc1fe87f9c655 "pdflatex"
+  "poster.out" 1693275840 0 d41d8cd98f00b204e9800998ecf8427e "pdflatex"
+  "poster.tex" 1693275765 1099 21f73dfffa6f545bcbd6bed135998efb ""
   (generated)
   "poster.aux"
   "poster.log"

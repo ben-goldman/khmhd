@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.24 (TeX Live 2022/CVE-2023-32700 patched) (preloaded format=pdflatex 2023.7.29)  28 AUG 2023 21:49
+This is pdfTeX, Version 3.141592653-2.6-1.40.24 (TeX Live 2022/CVE-2023-32700 patched) (preloaded format=pdflatex 2023.7.29)  28 AUG 2023 22:23
 entering extended mode
  restricted \write18 enabled.
  file:line:error style messages enabled.
@@ -610,24 +610,7 @@ Package beamerposter Info: fontscale=1.0, myfontscale=1.40 on input line 175.
 File: l3backend-pdftex.def 2022-10-26 L3 backend support: PDF output (pdfTeX)
 \l__color_backend_stack_int=\count347
 \l__pdf_internal_box=\box76
-) (./poster.aux
-./poster.aux:16: Missing \endcsname inserted.
-<to be read again> 
-                   \protect 
-l.16 ...label{fig:\begin  }{{1}{1}{}{Doc-Start}{}}
-                                                  
-The control sequence marked <to be read again> should
-not appear between \csname and \endcsname.
-
-./poster.aux:16: Missing \endcsname inserted.
-<to be read again> 
-                   \protect 
-l.16 ...label{fig:\begin  }{{1}{1}{}{Doc-Start}{}}
-                                                  
-The control sequence marked <to be read again> should
-not appear between \csname and \endcsname.
-
-)
+) (./poster.aux)
 \openout1 = `poster.aux'.
 
 LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 22.
@@ -769,58 +752,44 @@ Dictionary: translator-numbers-dictionary, Language: English
 ) (/usr/share/texlive/texmf-dist/tex/latex/translator/translator-theorem-dictionary-English.dict
 Dictionary: translator-theorem-dictionary, Language: English 
 ) (./poster.nav)
-
-./poster.tex:33: LaTeX Error: File `figures/' not found.
-
-See the LaTeX manual or LaTeX Companion for explanation.
-Type  H <return>  for immediate help.
- ...                                              
-                                                  
-l.33 \end{frame}
-                
-I could not locate the file with any of these extensions:
-.pdf,.png,.jpg,.mps,.jpeg,.jbig2,.jb2,.PDF,.PNG,.JPG,.JPEG,.JBIG2,.JB2,.eps
-Try typing  <return>  to proceed.
-If that doesn't work, type  X <return>  to quit.
-
-Runaway argument?
-./poster.tex:33: Paragraph ended before \end  was complete.
-<to be read again> 
-                   \par 
-l.33 \end{frame}
-                
-I suspect you've forgotten a `}', causing me to apply this
-control sequence to too much text. How can we recover?
-My plan is to forget the whole thing and hope for the best.
-
-./poster.tex:33: Missing number, treated as zero.
-<to be read again> 
-                   }
-l.33 \end{frame}
-                
-A number should have been here; I inserted `0'.
-(If you can't figure out why I needed to see a number,
-look up `weird error' in the index to The TeXbook.)
-
-./poster.tex:33: Illegal unit of measure (pt inserted).
-<to be read again> 
-                   }
-l.33 \end{frame}
-                
-Dimensions can be in units of em, ex, in, pt, pc,
-cm, mm, dd, cc, nd, nc, bp, or sp; but yours is a new one!
-I'll assume that you meant to say pt, for printer's points.
-To recover gracefully from this error, it's best to
-delete the erroneous units; e.g., type `2' to delete
-two letters. (See Chapter 27 of The TeXbook.)
-
-LaTeX Font Info:    Calculating math sizes for size <34.83> on input line 33.
-LaTeX Font Info:    Trying to load font information for OT1+mathkerncmss on input line 33.
-(/usr/share/texlive/texmf-dist/tex/latex/sansmathaccent/ot1mathkerncmss.fd
+<figures/timeline.png, id=13, 1375.1375pt x 792.9625pt>
+File: figures/timeline.png Graphic file (type png)
+<use figures/timeline.png>
+Package pdftex.def Info: figures/timeline.png  used on input line 43.
+(pdftex.def)             Requested size: 929.96199pt x 536.25505pt.
+<figures/merger.png, id=15, 2196.205pt x 1082.0425pt>
+File: figures/merger.png Graphic file (type png)
+<use figures/merger.png>
+Package pdftex.def Info: figures/merger.png  used on input line 43.
+(pdftex.def)             Requested size: 929.96199pt x 458.16965pt.
+<figures/clouds.png, id=16, 758.44646pt x 426.62613pt>
+File: figures/clouds.png Graphic file (type png)
+<use figures/clouds.png>
+Package pdftex.def Info: figures/clouds.png  used on input line 43.
+(pdftex.def)             Requested size: 929.96199pt x 523.10655pt.
+LaTeX Font Info:    Calculating math sizes for size <34.83> on input line 43.
+LaTeX Font Info:    Trying to load font information for OT1+mathkerncmss on input line 43.
+ (/usr/share/texlive/texmf-dist/tex/latex/sansmathaccent/ot1mathkerncmss.fd
 File: ot1mathkerncmss.fd 2020/01/31 Fontinst v1.933 font definitions for OT1/mathkerncmss.
-) [1
+)
+<figures/cubes.pdf, id=17, 722.7pt x 361.35pt>
+File: figures/cubes.pdf Graphic file (type pdf)
+<use figures/cubes.pdf>
+Package pdftex.def Info: figures/cubes.pdf  used on input line 43.
+(pdftex.def)             Requested size: 1394.97845pt x 697.55554pt.
+<figures/images.pdf, id=18, 1445.4pt x 469.755pt>
+File: figures/images.pdf Graphic file (type pdf)
+<use figures/images.pdf>
+Package pdftex.def Info: figures/images.pdf  used on input line 43.
+(pdftex.def)             Requested size: 1394.97845pt x 453.36809pt.
+<figures/lines.pdf, id=19, 722.7pt x 361.35pt>
+File: figures/lines.pdf Graphic file (type pdf)
+<use figures/lines.pdf>
+Package pdftex.def Info: figures/lines.pdf  used on input line 43.
+(pdftex.def)             Requested size: 1394.97845pt x 697.55554pt.
+ [1
 
-{/var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map}]
+{/var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map} <./figures/timeline.png> <./figures/merger.png> <./figures/clouds.png> <./figures/cubes.pdf> <./figures/images.pdf> <./figures/lines.pdf>]
 \tf@nav=\write6
 \openout6 = `poster.nav'.
 
@@ -830,35 +799,23 @@ File: ot1mathkerncmss.fd 2020/01/31 Fontinst v1.933 font definitions for OT1/mat
 \tf@snm=\write8
 \openout8 = `poster.snm'.
 
- (./poster.aux
-./poster.aux:16: Missing \endcsname inserted.
-<to be read again> 
-                   \protect 
-l.16 ...label{fig:\begin  }{{1}{1}{}{Doc-Start}{}}
-                                                  
-The control sequence marked <to be read again> should
-not appear between \csname and \endcsname.
-
-)
-
-LaTeX Warning: Label(s) may have changed. Rerun to get cross-references right.
-
+ (./poster.aux)
 Package rerunfilecheck Info: File `poster.out' has not changed.
 (rerunfilecheck)             Checksum: D41D8CD98F00B204E9800998ECF8427E;0.
  ) 
 Here is how much of TeX's memory you used:
- 23104 strings out of 478126
- 442341 string characters out of 5842787
- 1858793 words of memory out of 6000000
- 42653 multiletter control sequences out of 15000+600000
- 520282 words of font info for 60 fonts, out of 8000000 for 9000
+ 23135 strings out of 478126
+ 443324 string characters out of 5842787
+ 1866793 words of memory out of 6000000
+ 42684 multiletter control sequences out of 15000+600000
+ 520588 words of font info for 61 fonts, out of 8000000 for 9000
  14 hyphenation exceptions out of 8191
- 128i,14n,122p,431b,708s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 128i,14n,122p,431b,951s stack positions out of 10000i,1000n,20000p,200000b,200000s
 </usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmss17.pfb>
-Output written on poster.pdf (1 page, 15613 bytes).
+Output written on poster.pdf (1 page, 11300802 bytes).
 PDF statistics:
- 49 PDF objects out of 1000 (max. 8388607)
- 37 compressed objects within 1 object stream
- 4 named destinations out of 1000 (max. 500000)
- 43 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 200 PDF objects out of 1000 (max. 8388607)
+ 86 compressed objects within 1 object stream
+ 9 named destinations out of 1000 (max. 500000)
+ 73 words of extra memory for PDF output out of 10000 (max. 10000000)
 
