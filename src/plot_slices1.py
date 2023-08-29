@@ -33,7 +33,7 @@ u2min = 0
 b2min = 1e-15
 u2max = 2
 b2max = 1e-10
-fig, axs = plt.subplots(nrows=2, ncols=len(ts), figsize=(20, 6.5), sharey=True, sharex=True)
+fig, axs = plt.subplots(nrows=2, ncols=len(ts), figsize=(10, 3.3), sharey=True, sharex=True)
 for (i, t) in enumerate(ts):
     print(t)
     u2 = f[f"UB0/3D/{t}"][:]**2 + f[f"UB1/3D/{t}"][:]**2 + f[f"UB2/3D/{t}"][:]**2
