@@ -40,6 +40,8 @@ for (i, t) in enumerate(ts):
     b2 = f[f"UB3/3D/{t}"][:]**2 + f[f"UB4/3D/{t}"][:]**2 + f[f"UB5/3D/{t}"][:]**2
     c1 = axs[0, i].imshow(u2[128, :, :], extent=extent, norm=colors.Normalize(vmin=u2min, vmax=u2max))
     c2 = axs[1, i].imshow(b2[128, :, :], extent=extent, norm=colors.LogNorm(vmin=b2min, vmax=b2max), cmap="plasma")
+    axs[0, i].set(xticks=[], yticks=[])
+    axs[1, i].set(xticks=[], yticks=[])
     axs[0, i].set_title(f"$t={t * 0.01}$")
 
 d1 = make_axes_locatable(axs[0, -1])
