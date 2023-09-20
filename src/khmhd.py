@@ -19,6 +19,7 @@ def initialize(UB, UB_hat, X, K, K_over_K2, **context):
     r = np.random.sample(UB_hat.shape)
     theta = np.random.sample(UB_hat.shape)
     UB_hat += params.deltaU*r*np.exp(2j*pi*theta)
+    UB_hat[5] = 0
     UB_hat[0:3] -= (kx*UB_hat[0] + ky*UB_hat[1] + kz*UB_hat[2])*K_over_K2
     UB_hat[3:6] -= (kx*UB_hat[3] + ky*UB_hat[4] + kz*UB_hat[5])*K_over_K2
 
@@ -69,7 +70,7 @@ def spectrum(solver, U_hat):
         k0 = bins[i] # lower limit, k is upper
         ii = np.where((z > k0) & (z <= k))
         ll[i] = len(ii[0])
-        Ek[i] = (k**3 - k0**3)*np.sum(uiui[ii])
+        Ek[i] = (k**3 - k0**3)*np.sum(uiui[i])
 
     Ek = solver.comm.allreduce(Ek)
     ll = solver.comm.allreduce(ll)
@@ -90,44 +91,42 @@ def update(context):
     # for i in range(len(U[0, 0, 0])):
         # U[0, i] =- U_bar
         # B[0, i] =- B_bar
-    global U_mean
-    global B_mean
+    global means
     if params.tstep % params.compute == 0:
-        U_mean_previous = U_mean
-        B_mean_previous = B_mean
-        UB = context.UB_hat.backward(context.UB)
-        U, B = UB[:3], UB[3:]
-        U_mean = solver.comm.allreduce(np.mean(np.sqrt(U[0]**2 + U[1]**2 + U[2]**2)))
-        B_mean = solver.comm.allreduce(np.mean(np.sqrt(B[0]**2 + B[1]**2 + B[2]**2)))
-        g_u = (np.log(U_mean) - np.log(U_mean_previous))/params.dt
-        g_b = (np.log(B_mean) - np.log(B_mean_previous))/params.dt
-        Uk, bins = spectrum(solver, context.U_hat[1:3])
-        Bk, _ = spectrum(solver, context.B_hat[1:3])
-        update_outfile(f, params.t, ("Uk", "Bk", "U_mean", "B_mean"), (Uk, Bk, U_mean, B_mean))
+        # U_mean_previous = U_mean
+        # B_mean_previous = B_mean
+        # UB = context.UB_hat.backward(context.UB)
+        # U, B = UB[:3], UB[3:]
+        # U_mean = solver.comm.allreduce(np.mean(np.sqrt(U[0]**2 + U[1]**2 + U[2]**2)))
+        # B_mean = solver.comm.allreduce(np.mean(np.sqrt(B[0]**2 + B[1]**2 + B[2]**2)))
+        # g_u = (np.log(U_mean) - np.log(U_mean_previous))/params.dt
+        # g_b = (np.log(B_mean) - np.log(B_mean_previous))/params.dt
+        # Uk, bins = spectrum(solver, context.U_hat[1:3])
+        # Bk, _ = spectrum(solver, context.B_hat[1:3])
+        means_previous = means
+
+        spectra = np.ndarray((6, nbins))
+        means = []
+        bins = []
+        gammas = []
+        for i in range(6):
+            Ek, bins = spectrum(solver, context.UB_hat[i])
+            spectra[i] = Ek
+            mean = np.mean(solver.comm.allreduce(np.abs(context.UB_hat[i])))
+            means.append(mean)
+            gammas.append(np.log(mean) - means_previous[i])
+
+        update_outfile(f, params.t, ("bins", "spectra", "means"), (bins, spectra, means))
         if solver.rank == 0:
-            log.info(f"tstep={params.tstep}, t_sim={params.t:2.3f}, U_mean={U_mean:2.5e}, B_mean={B_mean:2.5e}, g_u={g_u:2.5f}, g_b={g_b:2.5f}, U_max={np.max(context.U):2.5e}, B_max={np.max(context.B):2.5e}")
-        with np.errstate(divide='ignore'):
-            fname = f"frames/Ek{params.tstep:05}.jpg"
-            # log.info(f"Plotting energy spectrum in {fname}")
-            fig, ax = plt.subplots()
-            ax.plot(bins, Uk, label="$U^2(k)$")
-            ax.plot(bins, Bk, label="$B^2(k)$")
-            ax.set_yscale("log")
-            ax.set_xscale("log", base=2)
-            ax.set_xlabel("$k$")
-            ax.set_ylabel("$E(k)$")
-            fig.legend()
-            fig.suptitle(f"$Energy spectrum, t={params.t:2.3f}, M={M}, Re={Re}, Rm={Rm}, dU = {params.deltaU}, dB={params.deltaU}$")
-            plt.savefig(fname)
-            plt.close()
+            log.info(f"tstep={params.tstep}, t_sim={params.t:2.3f}, means={means}, gammas={gammas}")
 
 
-def init_outfile(path, dnames, length):
-    log.info(f"Creating output file at '{path}' with names {dnames} and length {length}")
+def init_outfile(path, dnames, shapes):
+    log.info(f"Creating output file at '{path}' with names {dnames} and shapes {shapes}")
     f = h5py.File(path, mode="w", driver="mpio", comm=MPI.COMM_WORLD)
-    f.create_dataset("sim_time", dtype=np.float64, shape=(0), maxshape=(10000))
-    for dname in dnames:
-        f.create_dataset(dname, dtype=np.float64, shape=(0, length), maxshape=(10000, length))
+    f.create_dataset("sim_time", dtype=np.float64, shape=(0,), maxshape=(10000,))
+    for i, dname in enumerate(dnames):
+        f.create_dataset(dname, dtype=np.float64, shape=(0,) + shapes[i], maxshape=(10000,) + shapes[i])
     return f
 
 def update_outfile(f, sim_time, dnames, data):
@@ -144,7 +143,7 @@ if __name__ == '__main__':
     log.info("Starting simulation.")
     M = 6
     Pm = 1.0
-    Re = 50.0
+    Re = 100.0
     Rm = Pm*Re
     nu = 1.0/Re
     eta = 1.0/Rm
@@ -167,7 +166,7 @@ if __name__ == '__main__':
          'kh_width': 1e-2,
          'deltaU': 1e-4,
          'init_mode': 'noise',
-         'compute': 5,
+         'compute': 1,
          'convection': 'Divergence'})
 
     log.info("Building solver.")
@@ -179,12 +178,11 @@ if __name__ == '__main__':
     initialize(**context)
     log.info("Simulation initialized.")
     log.info("Calculating initial energy spectrum.")
-    Uk, bins = spectrum(solver, context.UB_hat[1:3])
-    Bk, _ = spectrum(solver, context.UB_hat[4:6])
+    Uk, bins = spectrum(solver, context.UB_hat[1])
+    nbins = len(bins)
     with np.errstate(divide='ignore'):
         fig, ax = plt.subplots()
         ax.plot(bins, Uk, label="$U^2(k)$")
-        ax.plot(bins, Bk, label="$B^2(k)$")
         ax.set_yscale("log")
         ax.set_xscale("log", base=2)
         ax.set_xlabel("$k$")
@@ -194,10 +192,9 @@ if __name__ == '__main__':
         plt.savefig(f"Ek0.jpg")
         plt.close()
     log.info("Initializing custom HDF5 file.")
-    f = init_outfile(config.params.out_file, ["Uk", "Bk", "U_mean", "B_mean"], bins.shape[0])
+    f = init_outfile(config.params.out_file, ("bins", "spectra", "means"), ((nbins,), (6, nbins), (6,)))
     log.info("Ready to start simulation.")
     with f:
         log.info("About to start solver.")
-        U_mean = config.params.deltaU
-        B_mean = config.params.deltaU
+        means = [0, 0, 0, 0, 0, 0]
         solve(solver, context)
