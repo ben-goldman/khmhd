@@ -9,29 +9,38 @@ pi = np.pi
 logging.basicConfig(level=logging.INFO, format="%(asctime)s~>%(message)s")
 log = logging.getLogger(__name__)
 
-def initialize(UB, UB_hat, X, K, K2, K_over_K2, **context):
+def initialize(UB, UB_hat, X, K, K_over_K2, **context):
     params = config.params
-    x = X[0]; y = X[1]; z = X[2]
-    UB[0] = -1 + np.tanh((z-pi/2)/params.kh_width) - np.tanh((z-3*pi/2)/params.kh_width)
-    UB[3:6] = params.deltaB
-
-    UB_hat = UB.forward(UB_hat)
     np.random.seed(42)
-    k = np.sqrt(K2)
-    k = np.where(k == 0, 1, k)
-    kk = K2.copy()
-    kk = np.where(kk == 0, 1, kk)
-    k1, k2, k3 = K[0], K[1], K[2]
-    ksq = np.sqrt(k1**2+k2**2)
-    ksq = np.where(ksq == 0, 1, ksq)
+    x = X[0]; y = X[1]; z = X[2]
+    kx, ky, kz = K[0], K[1], K[2]
+    UB[0] = -1 + np.tanh((z-pi/2)/params.kh_width) - np.tanh((z-3*pi/2)/params.kh_width)
+    UB_hat = UB.forward(UB_hat)
+    r = np.random.sample(UB_hat.shape)
+    theta = np.random.sample(UB_hat.shape)
+    UB_hat += params.deltaU*r*np.exp(2j*pi*theta)
+    UB_hat[0:3] -= (kx*UB_hat[0] + ky*UB_hat[1] + kz*UB_hat[2])*K_over_K2
+    UB_hat[3:6] -= (kx*UB_hat[3] + ky*UB_hat[4] + kz*UB_hat[5])*K_over_K2
 
-    theta1, theta2, phi = np.random.sample(UB_hat[0:3].shape)*2j*np.pi
-    alpha = np.sqrt(params.deltaU/4./np.pi/kk)*np.exp(1j*theta1)*np.cos(phi)
-    beta = np.sqrt(params.deltaU/4./np.pi/kk)*np.exp(1j*theta2)*np.sin(phi)
-    UB_hat[0] += (alpha*k*k2 + beta*k1*k3)/(k*ksq)
-    UB_hat[1] += (beta*k2*k3 - alpha*k*k1)/(k*ksq)
-    UB_hat[2] += beta*ksq/k
-    UB_hat[0:3] -= (k1*UB_hat[0] + k2*UB_hat[1] + k3*UB_hat[2])*K_over_K2
+    # UB[3:6] = params.deltaB
+    # GET RID OF FIELD LINES CROSSING INTERFACE
+
+    # UB_hat = UB.forward(UB_hat)
+    # k = np.sqrt(K2)
+    # k = np.where(k == 0, 1, k)
+    # kk = K2.copy()
+    # kk = np.where(kk == 0, 1, kk)
+    # ksq = np.sqrt(k1**2+k2**2)
+    # ksq = np.where(ksq == 0, 1, ksq)
+    # print(k.shape, k1.shape, K_over_K2.shape)
+
+    # theta1, theta2, phi = np.random.sample(UB_hat[0:3].shape)*2j*np.pi
+    # alpha = np.sqrt(params.deltaU/4./np.pi/kk)*np.exp(1j*theta1)*np.cos(phi)
+    # beta = np.sqrt(params.deltaU/4./np.pi/kk)*np.exp(1j*theta2)*np.sin(phi)
+    # UB_hat[0] += (alpha*k*k2 + beta*k1*k3)/(k*ksq)
+    # UB_hat[1] += (beta*k2*k3 - alpha*k*k1)/(k*ksq)
+    # UB_hat[2] += beta*ksq/k
+    # UB_hat[0:3] -= (k1*UB_hat[0] + k2*UB_hat[1] + k3*UB_hat[2])*K_over_K2
 
     # theta1, theta2, phi = np.random.sample(UB_hat[3:6].shape)*2j*np.pi
     # alpha = np.sqrt(params.deltaB/4./np.pi/kk)*np.exp(1j*theta1)*np.cos(phi)
@@ -40,7 +49,6 @@ def initialize(UB, UB_hat, X, K, K2, K_over_K2, **context):
     # UB_hat[4] += (beta*k2*k3 - alpha*k*k1)/(k*ksq)
     # UB_hat[5] += beta*ksq/k
     # UB_hat[3:6] -= (k1*UB_hat[3] + k2*UB_hat[4] + k3*UB_hat[5])*K_over_K2
-
 
 def spectrum(solver, U_hat):
     uiui = np.zeros(U_hat[0].shape)
@@ -109,7 +117,7 @@ def update(context):
             ax.set_xlabel("$k$")
             ax.set_ylabel("$E(k)$")
             fig.legend()
-            fig.suptitle(f"$Energy spectrum, t={params.t:2.3f}, M={M}, Re={Re}, Rm={Rm}, dU = {params.deltaU}, dB={params.deltaB}$")
+            fig.suptitle(f"$Energy spectrum, t={params.t:2.3f}, M={M}, Re={Re}, Rm={Rm}, dU = {params.deltaU}, dB={params.deltaU}$")
             plt.savefig(fname)
             plt.close()
 
@@ -134,9 +142,9 @@ def update_outfile(f, sim_time, dnames, data):
 
 if __name__ == '__main__':
     log.info("Starting simulation.")
-    M = 8
+    M = 6
     Pm = 1.0
-    Re = 900.0
+    Re = 50.0
     Rm = Pm*Re
     nu = 1.0/Re
     eta = 1.0/Rm
@@ -157,8 +165,7 @@ if __name__ == '__main__':
          'out_file': f"out_M{M}_Re{Re}.h5",
          'optimization': 'cython',
          'kh_width': 1e-2,
-         'deltaU': 1e-8,
-         'deltaB': 1e-8,
+         'deltaU': 1e-4,
          'init_mode': 'noise',
          'compute': 5,
          'convection': 'Divergence'})
@@ -192,5 +199,5 @@ if __name__ == '__main__':
     with f:
         log.info("About to start solver.")
         U_mean = config.params.deltaU
-        B_mean = config.params.deltaB
+        B_mean = config.params.deltaU
         solve(solver, context)

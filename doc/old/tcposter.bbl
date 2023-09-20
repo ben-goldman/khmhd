@@ -1,0 +1,21 @@
+\begin{thebibliography}{}
+
+\bibitem[Burns, 2020]{burns2020a}
+Burns, E. (2020).
+\newblock Neutron star mergers and how to study them.
+\newblock {\em Living Reviews in Relativity}, 23(1):4.
+
+\bibitem[Mortensen and Langtangen, 2016]{mortensen2016}
+Mortensen, M. and Langtangen, H.~P. (2016).
+\newblock High performance {{Python}} for direct numerical simulations of
+  turbulent flows.
+\newblock {\em Computer Physics Communications}, 203:53--65.
+
+\bibitem[Palenzuela et~al., 2022]{palenzuela2022}
+Palenzuela, C., {Aguilera-Miret}, R., Carrasco, F., Ciolfi, R., Kalinani,
+  J.~V., Kastaun, W., Mi{\~n}ano, B., and Vigan{\`o}, D. (2022).
+\newblock Turbulent magnetic field amplification in binary neutron star
+  mergers.
+\newblock {\em Physical Review D}, 106(2):023013.
+
+\end{thebibliography}
