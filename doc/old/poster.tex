@@ -1,0 +1,135 @@
+\documentclass{beamer}
+\usepackage{graphicx}
+\usetheme{posterben}
+\usepackage{amsmath}
+
+\title{Modeling Magnetic Field Amplification in Neutron Star Mergers}
+\author{Ben Goldman}
+\institute{Columbia University}
+
+\usepackage{natbib}
+\usepackage[scale=1.4]{beamerposter}
+\geometry{papersize={41in,36in}}
+\newcommand{\myfig}[4]{
+  \begin{figure}
+    \centering
+    \includegraphics[width=#2\textwidth]{figures/#1}
+    \def\param{#4}
+    \ifx\param\empty
+    \else
+      \caption{\param}
+    \fi
+    \label{fig:#3}
+  \end{figure}
+}
+
+\addtobeamertemplate{headline}{
+  {\begin{tikzpicture}[remember picture,overlay] 
+      \node [shift={(-2in,-2in)}] at (current page.north east) {\includegraphics[height=2in]{figures/THEA_logo}}; 
+  \end{tikzpicture}}
+  {\begin{tikzpicture}[remember picture,overlay] 
+      \node [shift={(2in,-2in)}] at (current page.north west) {\includegraphics[height=2in]{figures/columbia.pdf}}; 
+  \end{tikzpicture}}
+}
+
+\begin{document}
+
+\begin{frame}[t]
+  \begin{columns}
+    \begin{column}{0.5\textwidth}
+      \begin{block}{Question}
+        {\bf How do colliding neutron stars transform their kenetic energy into magnetic energy?}
+      \end{block}
+      \begin{block}{Background}
+        \begin{description}
+          \item[Neutron Star (NS):] Extremely dense core of collapsed massive stars
+          \item[Instability:] System in which perturbations grow exponentially
+          \item[Turbulence:] Disorderly fluid state characterized by vortex motion and energy dissipation
+          \item[Dynamo:] Self-sustaining process where turbulence within a conducting fluid amplifies an existing magnetic field
+        \end{description}
+        %\[\frac{\partial\vec{u}}{\partial t} + (\vec{u}\cdot \nabla)\vec{u} = -\frac{1}{\rho}\nabla p + \vec{g} + \nu\nabla^2\vec{u}\]
+      \end{block}
+      \begin{block}{Neutron star mergers}
+        \begin{itemize}
+          \item Extremely strong magnetic field produces gamma-ray burst and particle jets.
+          \item NSes merge {\bf very} rapidly during coalescence.
+        \end{itemize}
+        \myfig{timeline.png}{0.7}{timeline}{}
+      \end{block}
+      \begin{block}{Past research}
+        \begin{itemize}
+          \item Applied GRMHD (general relativity magnetohydrodynamics) to simulate coalescence phase of neutron star collision \citep{palenzuela2022}.
+          \item Magnetic field amplified in Kelvin-Helmholtz instability in core of merging system.
+          \item Required to mathematically approximate dynamo, rather than simulate turbulent flow due to immense computational complexity of simulation.
+        \end{itemize}
+        \myfig{merger.png}{0.8}{merger}{Magnetic field development in simulated neutron star collision \citep{palenzuela2022}}
+      \end{block}
+    \end{column}
+    \begin{column}{0.5\textwidth}
+      % \myfig{cubes.pdf}{}{0.8}{cubes}
+      \begin{block}{The Kelvin-Helmholtz instability}
+        % https://ichef.bbci.co.uk/news/976/cpsprodpb/3BA9/production/_127937251_screenshot2022-12-08at2.03.52pm.png
+        \begin{columns}[t]
+          \column{0.6\textwidth}
+          \begin{itemize}
+            \item Opposing fluid velocity layer produces unstable system.
+            \item Initially when perturbed, wavelike "lumps" develop.
+            \item Eventually becomes turbulent as waves grow and interact.
+          \end{itemize}
+          \vspace{1in}
+          \begin{flushright} Mature Kelvin Helmholtz instability in the Earth's atmosphere (Rachel Gordon/BBC)\end{flushright}
+          \column{0.4\textwidth}
+          \myfig{clouds.png}{1.0}{clouds}{}
+        \end{columns}
+      \end{block}
+      \begin{block}{Methods}
+        \begin{itemize}
+          \item Used spectral MHD solver SpectralDNS \citep{mortensen2016} to simulate the Kelvin Helmholtz insatability on Columbia Ginsburg cluster.
+          \item Initialized model with weak magnetic field and small velocity perturbations.
+          \item Ran simulation until magnetic field stabilized.
+          \item Recorded magnetic energy spectrum and growth rate.
+        \end{itemize}
+      \end{block}
+      \begin{block}{Results}
+        \myfig{images.pdf}{0.9}{images}{}
+        \begin{columns}[t]
+          \begin{column}{0.3\textwidth}
+            \begin{itemize}
+              \item 3-dimensional waves and eddies develop before turbulence onset.
+              \item Magnetic field grows first during wavelike KH growth phase and then again during early development of turbulence.
+              \item Kinetic energy dissipates during turbulence while magnetic field stays stable.
+            \end{itemize}
+          \end{column}
+          \begin{column}{0.7\textwidth}
+            \myfig{lines.pdf}{1.0}{lines}{}
+          \end{column}
+        \end{columns}
+      \end{block}
+        \begin{columns}[t]
+        \begin{column}{0.5\textwidth}
+      \begin{block}{Conclusions}
+        \begin{itemize}
+          \item The Kelvin Helmholtz instability can produce an efficient dynamo.
+          \item Magnetic field is amplified mostly during early coalescence.
+        \end{itemize}
+      \end{block}
+      \end{column}
+          \begin{column}{0.5\textwidth}
+            \begin{block}{Next steps}
+        \begin{itemize}
+          \item Rerun simulations under different choices of Reynolds number.
+          \item Introduce angular momentum of neutron stars.
+        \end{itemize}
+      \end{block}
+      \end{column}
+    \end{columns}
+    \end{column}
+  \end{columns}
+  \begin{block}{References}
+    \nocite{burns2020a}
+    \bibliographystyle{apalike}
+    \bibliography{refs.bib}
+  \end{block}
+\end{frame}
+
+\end{document}
