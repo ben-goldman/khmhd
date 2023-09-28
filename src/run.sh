@@ -6,7 +6,7 @@
 #SBATCH -c 32 # of cores per node
 #SBATCH -N 4  # of nodes
 #SBATCH --mem-per-cpu=5G      # The memory the job will use per cpu core
-#SBATCH --time=0-8:00         # The time the job will take to run in D-HH:MM
+#SBATCH --time=2-01:00         # The time the job will take to run in D-HH:MM
 #SBATCH --mail-type=END
 #SBATCH --mail-user=bog2101@columbia.edu
  
@@ -17,7 +17,7 @@ conda activate spectralDNS
 date
 M=8
 mpiexec -n 128 python khmhd.py M=8
-for N in {1..$M}; do mpiexec -n 128 python khmhd.py M=$M N=$N; done  
+for N in {4..$M}; do mpiexec -n 128 python khmhd.py M=$M N=$N; done  
 date
 
 # End of script
