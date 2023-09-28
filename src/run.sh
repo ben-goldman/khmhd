@@ -15,7 +15,9 @@ module load anaconda
 source /burg/home/bog2101/.bashrc
 conda activate spectralDNS
 date
-mpiexec -n 128 python khmhd.py
+M=8
+mpiexec -n 128 python khmhd.py M=8
+for N in {1..$M}; do mpiexec -n 128 python khmhd.py M=$M N=$N; done  
 date
 
 # End of script

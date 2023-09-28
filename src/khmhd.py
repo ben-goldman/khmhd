@@ -5,6 +5,14 @@ from matplotlib import colors
 from mpi4py import MPI
 import h5py
 import logging
+
+import argparse
+
+parser = argparse.ArgumentParser(prog='khmhd')
+parser.add_argument('Re')
+parser.add_argument('M')
+args = parser.parse_args()
+
 pi = np.pi
 logging.basicConfig(level=logging.INFO, format="%(asctime)s~>%(message)s")
 log = logging.getLogger(__name__)
@@ -141,14 +149,16 @@ def update_outfile(f, sim_time, dnames, data):
 
 if __name__ == '__main__':
     log.info("Starting simulation.")
-    M = 6
+    M = args.M
+    N = args.N
     Pm = 1.0
-    Re = 100.0
+    # Make sure we can resolve the Kolmogorov scale
+    Re_max = ((2/3)*2**M)**(4/3) 
+    Re = ((2/3)*2**N)**(4/3)
+    # Re = args.Re
     Rm = Pm*Re
     nu = 1.0/Re
     eta = 1.0/Rm
-    # Make sure we can resolve the Kolmogorov scale
-    Re_max = ((2/3)*2**M)**(4/3) 
     log.info(f"M={M}, Re={Re}, Rm={Rm} Pm={Pm}, nu={nu}, eta={eta}, Re_max={Re_max}")
     assert Re <= Re_max
     assert Rm <= Re_max
@@ -159,9 +169,9 @@ if __name__ == '__main__':
          'T': 50.0,                   # End time
          'M': [M, M, M],
          'L': [2*np.pi, 2*np.pi, 2*np.pi],
-         'write_result': 100,
+         'write_result': 500,
          'solver': "MHD",
-         'out_file': f"out_M{M}_Re{Re}.h5",
+         'out_file': f"out_M{M}_Re{N}.h5",
          'optimization': 'cython',
          'kh_width': 1e-2,
          'deltaU': 1e-4,
@@ -173,7 +183,7 @@ if __name__ == '__main__':
     solver = get_solver(update=update)
     log.info("Solver built.")
     context = solver.get_context()
-    context.hdf5file.filename = f"img_M{M}_Re{Re}"
+    context.hdf5file.filename = f"img_M{M}_Re{N}"
     log.info("Initializing simulation.")
     initialize(**context)
     log.info("Simulation initialized.")
@@ -182,14 +192,14 @@ if __name__ == '__main__':
     nbins = len(bins)
     with np.errstate(divide='ignore'):
         fig, ax = plt.subplots()
-        ax.plot(bins, Uk, label="$U^2(k)$")
+        ax.plot(bins, Uk, label=f"$U^2(k), N={N}$")
         ax.set_yscale("log")
         ax.set_xscale("log", base=2)
         ax.set_xlabel("$k$")
         ax.set_ylabel("$E(k)$")
         fig.legend()
         fig.suptitle(f"Energy spectrum, t=0")
-        plt.savefig(f"Ek0.jpg")
+        plt.savefig(f"Ek0N{N}.jpg")
         plt.close()
     log.info("Initializing custom HDF5 file.")
     f = init_outfile(config.params.out_file, ("bins", "spectra", "means"), ((nbins,), (6, nbins), (6,)))
