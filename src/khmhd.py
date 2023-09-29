@@ -9,7 +9,7 @@ import logging
 import argparse
 
 parser = argparse.ArgumentParser(prog='khmhd')
-parser.add_argument('Re')
+parser.add_argument('N')
 parser.add_argument('M')
 args = parser.parse_args()
 
