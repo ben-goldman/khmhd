@@ -8,17 +8,14 @@ import logging
 
 import argparse
 
-parser = argparse.ArgumentParser(prog='khmhd')
-parser.add_argument('Re')
-parser.add_argument('M')
-args = parser.parse_args()
-
 pi = np.pi
 logging.basicConfig(level=logging.INFO, format="%(asctime)s~>%(message)s")
 log = logging.getLogger(__name__)
 
 def initialize(UB, UB_hat, X, K, K_over_K2, **context):
     params = config.params
+    assert 1./params.nu <= params.Re_max
+    assert 1./params.eta <= params.Re_max
     np.random.seed(42)
     x = X[0]; y = X[1]; z = X[2]
     kx, ky, kz = K[0], K[1], K[2]
@@ -92,25 +89,8 @@ def spectrum(solver, U_hat):
 def update(context):
     params = config.params
     solver = config.solver
-    # U = context.UB_hat[0:3].copy()
-    # U_bar = np.mean(U[0], axis=0)
-    # B = context.UB_hat[3:6].copy()
-    # B_bar = np.mean(B[0], axis=0)
-    # for i in range(len(U[0, 0, 0])):
-        # U[0, i] =- U_bar
-        # B[0, i] =- B_bar
     global means
     if params.tstep % params.compute == 0:
-        # U_mean_previous = U_mean
-        # B_mean_previous = B_mean
-        # UB = context.UB_hat.backward(context.UB)
-        # U, B = UB[:3], UB[3:]
-        # U_mean = solver.comm.allreduce(np.mean(np.sqrt(U[0]**2 + U[1]**2 + U[2]**2)))
-        # B_mean = solver.comm.allreduce(np.mean(np.sqrt(B[0]**2 + B[1]**2 + B[2]**2)))
-        # g_u = (np.log(U_mean) - np.log(U_mean_previous))/params.dt
-        # g_b = (np.log(B_mean) - np.log(B_mean_previous))/params.dt
-        # Uk, bins = spectrum(solver, context.U_hat[1:3])
-        # Bk, _ = spectrum(solver, context.B_hat[1:3])
         means_previous = means
 
         spectra = np.ndarray((6, nbins))
@@ -126,10 +106,11 @@ def update(context):
 
         update_outfile(f, params.t, ("bins", "spectra", "means"), (bins, spectra, means))
         if solver.rank == 0:
-            log.info(f"tstep={params.tstep}, t_sim={params.t:2.3f}, means={means}, gammas={gammas}")
+            log.info(f"tstep={params.tstep}/{params.T/params.dt}, t_sim={params.t:2.3f}, means={means[0]:2.3f}, gammas={gammas[0]:2.3f}")
 
 
 def init_outfile(path, dnames, shapes):
+    print(path)
     log.info(f"Creating output file at '{path}' with names {dnames} and shapes {shapes}")
     f = h5py.File(path, mode="w", driver="mpio", comm=MPI.COMM_WORLD)
     f.create_dataset("sim_time", dtype=np.float64, shape=(0,), maxshape=(10000,))
@@ -148,42 +129,36 @@ def update_outfile(f, sim_time, dnames, data):
 
 
 if __name__ == '__main__':
-    log.info("Starting simulation.")
-    M = args.M
-    N = args.N
-    Pm = 1.0
-    # Make sure we can resolve the Kolmogorov scale
-    Re_max = ((2/3)*2**M)**(4/3) 
-    Re = ((2/3)*2**N)**(4/3)
-    # Re = args.Re
-    Rm = Pm*Re
-    nu = 1.0/Re
-    eta = 1.0/Rm
-    log.info(f"M={M}, Re={Re}, Rm={Rm} Pm={Pm}, nu={nu}, eta={eta}, Re_max={Re_max}")
-    assert Re <= Re_max
-    assert Rm <= Re_max
     config.update(
-        {'nu': nu,             # Viscosity
-         'eta': eta,
-         'dt': 0.01,                 # Time step
-         'T': 50.0,                   # End time
-         'M': [M, M, M],
+        {'dt': 0.01,
+         'T': 50.0,
          'L': [2*np.pi, 2*np.pi, 2*np.pi],
          'write_result': 500,
          'solver': "MHD",
-         'out_file': f"out_M{M}_Re{N}.h5",
          'optimization': 'cython',
          'kh_width': 1e-2,
          'deltaU': 1e-4,
          'init_mode': 'noise',
+         'dealias': '3/2-rule',
          'compute': 1,
-         'convection': 'Divergence'})
-
+         'convection': 'Divergence'}, "triplyperiodic")
+    config.triplyperiodic.add_argument('--Pm', type=float, default=1.0)
+    config.triplyperiodic.add_argument('--N_Re', type=int)
     log.info("Building solver.")
-    solver = get_solver(update=update)
+    solver = get_solver(update=update, mesh="triplyperiodic")
+    Re_max = ((2/3)*2**config.params.M[0])**(4/3) 
+    Re = ((2/3)*2**config.params.N_Re)**(4/3)
+    Rm = config.params.Pm*Re
+    config.params.nu = 1.0/Re
+    config.params.Re_max = Re_max
+    config.params.eta = 1.0/Rm
+    config.params.out_file = f"out_N{config.params.M[0]}_Re{config.params.N_Re}.h5"
+    log.info("Starting simulation.")
+    log.info(f"N={config.params.M[0]}, Re={Re}, Rm={Rm} Pm={config.params.Pm}, Re_max={Re_max}")
+
     log.info("Solver built.")
     context = solver.get_context()
-    context.hdf5file.filename = f"img_M{M}_Re{N}"
+    context.hdf5file.filename = f"img_N{config.params.M[0]}_Re{config.params.N_Re}"
     log.info("Initializing simulation.")
     initialize(**context)
     log.info("Simulation initialized.")
@@ -192,14 +167,14 @@ if __name__ == '__main__':
     nbins = len(bins)
     with np.errstate(divide='ignore'):
         fig, ax = plt.subplots()
-        ax.plot(bins, Uk, label=f"$U^2(k), N={N}$")
+        ax.plot(bins, Uk, label=f"$U^2(k), N={config.params.N_Re}$")
         ax.set_yscale("log")
         ax.set_xscale("log", base=2)
         ax.set_xlabel("$k$")
         ax.set_ylabel("$E(k)$")
         fig.legend()
         fig.suptitle(f"Energy spectrum, t=0")
-        plt.savefig(f"Ek0N{N}.jpg")
+        plt.savefig(f"Ek0_N{config.params.M[0]}.jpg")
         plt.close()
     log.info("Initializing custom HDF5 file.")
     f = init_outfile(config.params.out_file, ("bins", "spectra", "means"), ((nbins,), (6, nbins), (6,)))
