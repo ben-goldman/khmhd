@@ -144,7 +144,7 @@ if __name__ == '__main__':
          'solver': "MHD",
          'optimization': 'cython',
          'kh_width': 1e-2,
-         'delta': 1e-3,
+         'delta': 1e-4,
          'init_mode': 'noise',
          'dealias': '3/2-rule',
          'compute': 1,
