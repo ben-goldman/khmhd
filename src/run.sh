@@ -10,14 +10,14 @@
 #SBATCH --mail-type=ALL
 #SBATCH --mail-user=bog2101@columbia.edu
  
-module load anaconda
+# module load anaconda
 # conda init bash
-source /burg/home/bog2101/.bashrc
-conda activate spectralDNS
+# source /burg/home/bog2101/.bashrc
+# conda activate spectralDNS
 date
 M=8
 # for N in $(seq 1 $M); do echo $N; mpiexec -n 128 python khmhd.py --M $M $M $M --N_Re $N; done  
-mpiexec -n 128 python khmhd.py -M $M $M $M --N_Re $M
+mpiexec -n 1 python khmhd.py --M $M $M $M --N_Re $M
 date
 
 # End of script
