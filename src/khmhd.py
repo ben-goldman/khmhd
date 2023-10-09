@@ -104,7 +104,6 @@ def update(context):
         for i in range(6):
             Ek, bs = spectrum(solver, context.UB_hat[i])
             UBk.append(Ek)
-            print(np.log(Ek))
             bins = bs
             mean = solver.comm.allreduce(np.mean(np.abs(context.UB_hat[i])))
             means.append(mean)
@@ -117,7 +116,6 @@ def update(context):
 
 
 def init_outfile(path, dnames, shapes):
-    print(path)
     log.info(f"Creating output file at '{path}' with names {dnames} and shapes {shapes}")
     f = h5py.File(path, mode="w", driver="mpio", comm=MPI.COMM_WORLD)
     f.create_dataset("sim_time", dtype=np.float64, shape=(0,), maxshape=(10000,))

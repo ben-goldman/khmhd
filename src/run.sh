@@ -17,7 +17,7 @@ conda activate spectralDNS
 date
 M=8
 # for N in $(seq 1 $M); do echo $N; mpiexec -n 128 python khmhd.py --M $M $M $M --N_Re $N; done  
-mpiexec -n 1 python khmhd.py --M $M $M $M --N_Re $M
+mpiexec -n 128 python khmhd.py --M $M $M $M --N_Re $M
 date
 
 # End of script
