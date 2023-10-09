@@ -23,7 +23,7 @@ def initialize(UB, UB_hat, X, K, K_over_K2, **context):
     UB_hat = UB.forward(UB_hat)
     r = np.random.sample(UB_hat.shape)
     theta = np.random.sample(UB_hat.shape)
-    UB_hat += params.deltaU*r*np.exp(2j*pi*theta)
+    UB_hat += params.delta*r*np.exp(2j*pi*theta)
     UB_hat[5] = 0
     UB_hat[0:3] -= (kx*UB_hat[0] + ky*UB_hat[1] + kz*UB_hat[2])*K_over_K2
     UB_hat[3:6] -= (kx*UB_hat[3] + ky*UB_hat[4] + kz*UB_hat[5])*K_over_K2
@@ -57,17 +57,16 @@ def initialize(UB, UB_hat, X, K, K_over_K2, **context):
     # UB_hat[3:6] -= (k1*UB_hat[3] + k2*UB_hat[4] + k3*UB_hat[5])*K_over_K2
 
 def spectrum(solver, U_hat):
-    uiui = np.zeros(U_hat[0].shape)
+    uiui = np.zeros(U_hat.shape)
     uiui[..., 1:-1] = 2*np.sum((U_hat[..., 1:-1]*np.conj(U_hat[..., 1:-1])).real, axis=0)
     uiui[..., 0] = np.sum((U_hat[..., 0]*np.conj(U_hat[..., 0])).real, axis=0)
     uiui[..., -1] = np.sum((U_hat[..., -1]*np.conj(U_hat[..., -1])).real, axis=0)
     uiui *= (4./3.*np.pi)
 
     # Create bins for Ek
-    Nb = int(np.sqrt(sum((config.params.N/2)**2)/6))
+    Nb = int(np.sqrt(sum((config.params.N/2)**2)/3))
     bins = np.array(range(0, Nb))+0.5
     z = np.digitize(np.sqrt(context.K2), bins, right=True)
-
     # Sample
     Ek = np.zeros(Nb)
     ll = np.zeros(Nb)
@@ -75,7 +74,7 @@ def spectrum(solver, U_hat):
         k0 = bins[i] # lower limit, k is upper
         ii = np.where((z > k0) & (z <= k))
         ll[i] = len(ii[0])
-        Ek[i] = (k**3 - k0**3)*np.sum(uiui[i])
+        Ek[i] = (k**3 - k0**3)*np.sum(uiui[ii])
 
     Ek = solver.comm.allreduce(Ek)
     ll = solver.comm.allreduce(ll)
@@ -83,30 +82,38 @@ def spectrum(solver, U_hat):
         if not ll[i] == 0:
             Ek[i] = Ek[i] / ll[i]
 
+    # E0 = uiui.mean(axis=(1, 2))
+    # E1 = uiui.mean(axis=(0, 2))
+    # E2 = uiui.mean(axis=(0, 1))
+    # print(E0.shape)
+    # print(E1.shape)
+    # print(E2.shape)
+
+    # return Ek, bins, E0, E1, E2
     return Ek, bins
 
 
 def update(context):
     params = config.params
     solver = config.solver
-    global means
     if params.tstep % params.compute == 0:
-        means_previous = means
-
-        spectra = np.ndarray((6, nbins))
-        means = []
+        UBk = []
         bins = []
-        gammas = []
+        means = []
+        logstr = f"tstep={params.tstep}/{params.T/params.dt}, t_sim={params.t:2.3f}, means=["
         for i in range(6):
-            Ek, bins = spectrum(solver, context.UB_hat[i])
-            spectra[i] = Ek
-            mean = np.mean(solver.comm.allreduce(np.abs(context.UB_hat[i])))
+            Ek, bs = spectrum(solver, context.UB_hat[i])
+            UBk.append(Ek)
+            print(np.log(Ek))
+            bins = bs
+            mean = solver.comm.allreduce(np.mean(np.abs(context.UB_hat[i])))
             means.append(mean)
-            gammas.append(np.log(mean) - means_previous[i])
+            logstr += f"{mean:2.3f}, "
 
-        update_outfile(f, params.t, ("bins", "spectra", "means"), (bins, spectra, means))
+        update_outfile(f, params.t, ("bins", "spectra", "means"), (bins, UBk, means))
+        logstr+="]"
         if solver.rank == 0:
-            log.info(f"tstep={params.tstep}/{params.T/params.dt}, t_sim={params.t:2.3f}, means={means[0]:2.3f}, gammas={gammas[0]:2.3f}")
+            log.info(logstr)
 
 
 def init_outfile(path, dnames, shapes):
@@ -137,7 +144,7 @@ if __name__ == '__main__':
          'solver': "MHD",
          'optimization': 'cython',
          'kh_width': 1e-2,
-         'deltaU': 1e-4,
+         'delta': 1e-3,
          'init_mode': 'noise',
          'dealias': '3/2-rule',
          'compute': 1,
@@ -163,19 +170,8 @@ if __name__ == '__main__':
     initialize(**context)
     log.info("Simulation initialized.")
     log.info("Calculating initial energy spectrum.")
-    Uk, bins = spectrum(solver, context.UB_hat[1])
+    _, bins = spectrum(solver, context.U_hat[0])
     nbins = len(bins)
-    with np.errstate(divide='ignore'):
-        fig, ax = plt.subplots()
-        ax.plot(bins, Uk, label=f"$U^2(k), N={config.params.N_Re}$")
-        ax.set_yscale("log")
-        ax.set_xscale("log", base=2)
-        ax.set_xlabel("$k$")
-        ax.set_ylabel("$E(k)$")
-        fig.legend()
-        fig.suptitle(f"Energy spectrum, t=0")
-        plt.savefig(f"Ek0_N{config.params.M[0]}.jpg")
-        plt.close()
     log.info("Initializing custom HDF5 file.")
     f = init_outfile(config.params.out_file, ("bins", "spectra", "means"), ((nbins,), (6, nbins), (6,)))
     log.info("Ready to start simulation.")
