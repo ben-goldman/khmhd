@@ -12,49 +12,32 @@ pi = np.pi
 logging.basicConfig(level=logging.INFO, format="%(asctime)s~>%(message)s")
 log = logging.getLogger(__name__)
 
-def initialize(UB, UB_hat, X, K, K_over_K2, **context):
+def initialize(UB, UB_hat, X, K, K2, K_over_K2, **context):
     params = config.params
     assert 1./params.nu <= params.Re_max
     assert 1./params.eta <= params.Re_max
+    kf = 3
     np.random.seed(42)
     x = X[0]; y = X[1]; z = X[2]
-    kx, ky, kz = K[0], K[1], K[2]
+    k = np.sqrt(K2)
+    k = np.where(k == 0, 1, k)
+    kk = K2.copy()
+    kk = np.where(kk == 0, 1, kk)
+    k1, k2, k3 = K[0], K[1], K[2]
+    ksq = np.sqrt(k1**2+k2**2)
+    ksq = np.where(ksq == 0, 1, ksq)
+
     UB[0] = -1 + np.tanh((z-pi/2)/params.kh_width) - np.tanh((z-3*pi/2)/params.kh_width)
+    UB[3] = params.B0
+    UB[4] = params.B0
     UB_hat = UB.forward(UB_hat)
-    r = np.random.sample(UB_hat.shape)
-    theta = np.random.sample(UB_hat.shape)
-    UB_hat += params.delta*r*np.exp(2j*pi*theta)
-    UB_hat[5] = 0
-    UB_hat[0:3] -= (kx*UB_hat[0] + ky*UB_hat[1] + kz*UB_hat[2])*K_over_K2
-    UB_hat[3:6] -= (kx*UB_hat[3] + ky*UB_hat[4] + kz*UB_hat[5])*K_over_K2
-
-    # UB[3:6] = params.deltaB
-    # GET RID OF FIELD LINES CROSSING INTERFACE
-
-    # UB_hat = UB.forward(UB_hat)
-    # k = np.sqrt(K2)
-    # k = np.where(k == 0, 1, k)
-    # kk = K2.copy()
-    # kk = np.where(kk == 0, 1, kk)
-    # ksq = np.sqrt(k1**2+k2**2)
-    # ksq = np.where(ksq == 0, 1, ksq)
-    # print(k.shape, k1.shape, K_over_K2.shape)
-
-    # theta1, theta2, phi = np.random.sample(UB_hat[0:3].shape)*2j*np.pi
-    # alpha = np.sqrt(params.deltaU/4./np.pi/kk)*np.exp(1j*theta1)*np.cos(phi)
-    # beta = np.sqrt(params.deltaU/4./np.pi/kk)*np.exp(1j*theta2)*np.sin(phi)
-    # UB_hat[0] += (alpha*k*k2 + beta*k1*k3)/(k*ksq)
-    # UB_hat[1] += (beta*k2*k3 - alpha*k*k1)/(k*ksq)
-    # UB_hat[2] += beta*ksq/k
-    # UB_hat[0:3] -= (k1*UB_hat[0] + k2*UB_hat[1] + k3*UB_hat[2])*K_over_K2
-
-    # theta1, theta2, phi = np.random.sample(UB_hat[3:6].shape)*2j*np.pi
-    # alpha = np.sqrt(params.deltaB/4./np.pi/kk)*np.exp(1j*theta1)*np.cos(phi)
-    # beta = np.sqrt(params.deltaB/4./np.pi/kk)*np.exp(1j*theta2)*np.sin(phi)
-    # UB_hat[3] += (alpha*k*k2 + beta*k1*k3)/(k*ksq)
-    # UB_hat[4] += (beta*k2*k3 - alpha*k*k1)/(k*ksq)
-    # UB_hat[5] += beta*ksq/k
-    # UB_hat[3:6] -= (k1*UB_hat[3] + k2*UB_hat[4] + k3*UB_hat[5])*K_over_K2
+    theta1, theta2, phi = np.random.sample(UB_hat[0:3].shape)*2j*np.pi
+    alpha = np.sqrt(params.delta/4./np.pi/kk)*np.exp(1j*theta1)*np.cos(phi)
+    beta = np.sqrt(params.delta/4./np.pi/kk)*np.exp(1j*theta2)*np.sin(phi)
+    UB_hat[0] += (alpha*k*k2 + beta*k1*k3)/(k*ksq)
+    UB_hat[1] = (beta*k2*k3 - alpha*k*k1)/(k*ksq)
+    UB_hat[2] = beta*ksq/k
+    UB_hat[0:3] -= (K[0]*UB_hat[0] + K[1]*UB_hat[1] + K[2]*UB_hat[2])*K_over_K2
 
 def spectrum(solver, U_hat):
     uiui = np.zeros(U_hat.shape)
@@ -100,14 +83,22 @@ def update(context):
         UBk = []
         bins = []
         means = []
-        logstr = f"tstep={params.tstep}/{params.T/params.dt}, t_sim={params.t:2.3f}, means=["
+        logstr = f"tstep={params.tstep}/{params.T/params.dt}, t_sim={params.t:2.3f}, log(means)=["
+        fig, ax = plt.subplots()
         for i in range(6):
             Ek, bs = spectrum(solver, context.UB_hat[i])
             UBk.append(Ek)
             bins = bs
             mean = solver.comm.allreduce(np.mean(np.abs(context.UB_hat[i])))
             means.append(mean)
-            logstr += f"{mean:2.3f}, "
+            ax.plot(bs, Ek, label = f"U[{i}]")
+            logstr += f"{np.log(mean):2.3f}, "
+        ax.set_xscale("log")
+        ax.set_yscale("log")
+        fig.legend()
+        fig.suptitle(f"t={params.tstep}")
+        plt.savefig(f"frames/Ek{params.tstep:04d}")
+        plt.close()
 
         update_outfile(f, params.t, ("bins", "spectra", "means"), (bins, UBk, means))
         logstr+="]"
@@ -136,16 +127,17 @@ def update_outfile(f, sim_time, dnames, data):
 if __name__ == '__main__':
     config.update(
         {'dt': 0.01,
-         'T': 50.0,
+         'T': 1,
          'L': [2*np.pi, 2*np.pi, 2*np.pi],
-         'write_result': 500,
+         'write_result': 25,
          'solver': "MHD",
          'optimization': 'cython',
          'kh_width': 1e-2,
-         'delta': 1e-4,
+         'delta': 1e-10,
          'init_mode': 'noise',
          'dealias': '3/2-rule',
          'compute': 1,
+         'B0': 1e-2,
          'convection': 'Divergence'}, "triplyperiodic")
     config.triplyperiodic.add_argument('--Pm', type=float, default=1.0)
     config.triplyperiodic.add_argument('--N_Re', type=int)
@@ -168,7 +160,14 @@ if __name__ == '__main__':
     initialize(**context)
     log.info("Simulation initialized.")
     log.info("Calculating initial energy spectrum.")
-    _, bins = spectrum(solver, context.U_hat[0])
+    Ek, bins = spectrum(solver, context.U_hat[0])
+    for i in range(6):
+        Ek, bins = spectrum(solver, context.UB_hat[i])
+        plt.plot(Ek, label=f"UB[{i}]")
+    plt.xscale("log")
+    plt.yscale("log")
+    plt.legend()
+    plt.savefig("Ek0.pdf")
     nbins = len(bins)
     log.info("Initializing custom HDF5 file.")
     f = init_outfile(config.params.out_file, ("bins", "spectra", "means"), ((nbins,), (6, nbins), (6,)))
