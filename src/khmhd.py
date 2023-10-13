@@ -127,7 +127,7 @@ def update_outfile(f, sim_time, dnames, data):
 if __name__ == '__main__':
     config.update(
         {'dt': 0.01,
-         'T': 1,
+         'T': 30,
          'L': [2*np.pi, 2*np.pi, 2*np.pi],
          'write_result': 25,
          'solver': "MHD",
