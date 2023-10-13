@@ -127,7 +127,7 @@ def update_outfile(f, sim_time, dnames, data):
 if __name__ == '__main__':
     config.update(
         {'dt': 0.01,
-         'T': 30,
+         'T': 60,
          'L': [2*np.pi, 2*np.pi, 2*np.pi],
          'write_result': 25,
          'solver': "MHD",
@@ -174,5 +174,4 @@ if __name__ == '__main__':
     log.info("Ready to start simulation.")
     with f:
         log.info("About to start solver.")
-        means = [0, 0, 0, 0, 0, 0]
         solve(solver, context)
